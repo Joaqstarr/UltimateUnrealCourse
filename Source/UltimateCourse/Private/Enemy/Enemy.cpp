@@ -6,6 +6,7 @@
 #include "Components/AttributeComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "UltimateCourse/DebugMacros.h"
 #include "Kismet/KismetSystemLibrary.h"
@@ -29,6 +30,9 @@ AEnemy::AEnemy()
 	HealthBarComponent = CreateDefaultSubobject<UHealthBarComponent>(FName("HealthBar"));
 	HealthBarComponent->SetupAttachment(GetRootComponent());
 	HealthBarComponent->SetAbsolute(false, false, false);
+
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+	bUseControllerRotationYaw = false;
 }
 
 // Called when the game starts or when spawned
