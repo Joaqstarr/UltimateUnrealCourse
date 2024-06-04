@@ -206,8 +206,6 @@ void AEnemy::UpdatePatrolPoints()
 	
 	FVector NormalizedVerticalActorPos = GetActorLocation();
 	NormalizedVerticalActorPos.Z = CurrentPatrolTarget->GetActorLocation().Z;
-
-	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("Distance %f is less than %f"),FVector::Distance(CurrentPatrolTarget->GetActorLocation(), NormalizedVerticalActorPos) , AcceptableNavPointDistance));
 	if(FVector::Distance(CurrentPatrolTarget->GetActorLocation(), NormalizedVerticalActorPos) > AcceptableNavPointDistance)return;
 	
 	
@@ -218,8 +216,9 @@ void AEnemy::UpdatePatrolPoints()
 			PointPosition = 0;
 		CurrentPatrolTarget = PatrolTargets[PointPosition];
 	}
-	
-	MoveToTarget(CurrentPatrolTarget);
+
+	const float RandomTimer = FMath::RandRange(PatrolWaitTime, PatrolWaitTime*2);
+	GetWorldTimerManager().SetTimer(PatrolTimer, this, &AEnemy::PatrolTimerFinished, RandomTimer);
 }
 
 void AEnemy::MoveToTarget(TObjectPtr<AActor> Target) const
@@ -239,5 +238,10 @@ void AEnemy::MoveToTarget(TObjectPtr<AActor> Target) const
 			DrawDebugSphere(GetWorld(), Location, 12.f, 12, FColor::Green, false, 10.f);
 		}
 	}
+}
+
+void AEnemy::PatrolTimerFinished()
+{
+	MoveToTarget(CurrentPatrolTarget);
 }
 

@@ -78,4 +78,9 @@ private:
 	int PointPosition = 0;
 	void UpdatePatrolPoints();
 	void MoveToTarget(TObjectPtr<AActor> Target) const;
+
+	UPROPERTY(EditAnywhere, Category="AI Navigation")
+	float PatrolWaitTime = 3.f;
+	FTimerHandle PatrolTimer;
+	void PatrolTimerFinished();
 };
