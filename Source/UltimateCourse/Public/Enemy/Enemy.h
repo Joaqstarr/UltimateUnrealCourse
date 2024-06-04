@@ -62,7 +62,7 @@ private:
 	TObjectPtr<APawn> Damager;
 	UPROPERTY(EditDefaultsOnly)
 	float MaxHealthBarDistance = 1000;
-
+	void CheckMaxHealthBarDist();
 	/*
 	 *Navigation
 	 */
@@ -72,4 +72,10 @@ private:
 	UPROPERTY(EditInstanceOnly, Category="AI Navigation")
 	TArray<AActor*> PatrolTargets;
 	TObjectPtr<AAIController> AiController;
+	UPROPERTY(EditDefaultsOnly, Category="AI Navigation")
+	float AcceptableNavPointDistance = 15.f;
+
+	int PointPosition = 0;
+	void UpdatePatrolPoints();
+	void MoveToTarget(TObjectPtr<AActor> Target) const;
 };

@@ -48,21 +48,7 @@ void AEnemy::BeginPlay()
 	}
 	AiController = Cast<AAIController>(GetController());
 
-	if(AiController && CurrentPatrolTarget)
-	{
-		FAIMoveRequest MoveRequest;
-		MoveRequest.SetGoalActor(CurrentPatrolTarget);
-		MoveRequest.SetAcceptanceRadius(15.f);
-
-		FNavPathSharedPtr NavPath;
-		AiController->MoveTo(MoveRequest, &NavPath);
-		TArray<FNavPathPoint>& PathPoints = NavPath->GetPathPoints();
-		for(FNavPathPoint& Point : PathPoints)
-		{
-			const FVector& Location = Point.Location;
-			DrawDebugSphere(GetWorld(), Location, 12.f, 12, FColor::Green, false, 10.f);
-		}
-	}
+	MoveToTarget(CurrentPatrolTarget);
 }
 
 void AEnemy::PlayHitReactMontage(const FName& Section) const
@@ -100,17 +86,10 @@ void AEnemy::Die()
 void AEnemy::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	if(Damager)
-	{
-		if(FVector::Distance( Damager->GetActorLocation(), GetActorLocation()) > MaxHealthBarDistance)
-		{
-			Damager = nullptr;
-			if(HealthBarComponent)
-			{
-				HealthBarComponent->SetVisibility(false);
-			}
-		}
-	}
+	
+	UpdatePatrolPoints();
+
+	CheckMaxHealthBarDist();
 }
 
 // Called to bind functionality to input
@@ -204,5 +183,61 @@ FName AEnemy::GetDirectionFromHitPoint(const FVector& HitPoint) const
 		}
 	}
 	return FName("Back");
+}
+
+void AEnemy::CheckMaxHealthBarDist()
+{
+	if(Damager)
+	{
+		if(FVector::Distance( Damager->GetActorLocation(), GetActorLocation()) > MaxHealthBarDistance)
+		{
+			Damager = nullptr;
+			if(HealthBarComponent)
+			{
+				HealthBarComponent->SetVisibility(false);
+			}
+		}
+	}
+}
+
+void AEnemy::UpdatePatrolPoints()
+{
+	if(!CurrentPatrolTarget)return;
+	
+	FVector NormalizedVerticalActorPos = GetActorLocation();
+	NormalizedVerticalActorPos.Z = CurrentPatrolTarget->GetActorLocation().Z;
+
+	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("Distance %f is less than %f"),FVector::Distance(CurrentPatrolTarget->GetActorLocation(), NormalizedVerticalActorPos) , AcceptableNavPointDistance));
+	if(FVector::Distance(CurrentPatrolTarget->GetActorLocation(), NormalizedVerticalActorPos) > AcceptableNavPointDistance)return;
+	
+	
+	if(PatrolTargets.Num() > 0)
+	{
+		PointPosition++;
+		if(PointPosition >= PatrolTargets.Num())
+			PointPosition = 0;
+		CurrentPatrolTarget = PatrolTargets[PointPosition];
+	}
+	
+	MoveToTarget(CurrentPatrolTarget);
+}
+
+void AEnemy::MoveToTarget(TObjectPtr<AActor> Target) const
+{
+	if(AiController && Target)
+	{
+		FAIMoveRequest MoveRequest;
+		MoveRequest.SetGoalActor(Target);
+		MoveRequest.SetAcceptanceRadius(15.f);
+
+		FNavPathSharedPtr NavPath;
+		AiController->MoveTo(MoveRequest, &NavPath);
+		TArray<FNavPathPoint>& PathPoints = NavPath->GetPathPoints();
+		for(FNavPathPoint& Point : PathPoints)
+		{
+			const FVector& Location = Point.Location;
+			DrawDebugSphere(GetWorld(), Location, 12.f, 12, FColor::Green, false, 10.f);
+		}
+	}
 }
 
