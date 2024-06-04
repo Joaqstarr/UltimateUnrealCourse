@@ -12,6 +12,7 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "HUD/HealthBarComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "AIController.h"
 
 // Sets default values
 AEnemy::AEnemy()
@@ -33,6 +34,7 @@ AEnemy::AEnemy()
 
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	bUseControllerRotationYaw = false;
+
 }
 
 // Called when the game starts or when spawned
@@ -44,7 +46,23 @@ void AEnemy::BeginPlay()
 		HealthBarComponent->SetVisibility(false);
 		HealthBarComponent->SetHealthPercent(Attributes->GetHealthPercent());
 	}
+	AiController = Cast<AAIController>(GetController());
 
+	if(AiController && CurrentPatrolTarget)
+	{
+		FAIMoveRequest MoveRequest;
+		MoveRequest.SetGoalActor(CurrentPatrolTarget);
+		MoveRequest.SetAcceptanceRadius(15.f);
+
+		FNavPathSharedPtr NavPath;
+		AiController->MoveTo(MoveRequest, &NavPath);
+		TArray<FNavPathPoint>& PathPoints = NavPath->GetPathPoints();
+		for(FNavPathPoint& Point : PathPoints)
+		{
+			const FVector& Location = Point.Location;
+			DrawDebugSphere(GetWorld(), Location, 12.f, 12, FColor::Green, false, 10.f);
+		}
+	}
 }
 
 void AEnemy::PlayHitReactMontage(const FName& Section) const

@@ -13,6 +13,7 @@ class UAnimMontage;
 class USoundBase;
 class UParticleSystem;
 class UAttributeComponent;
+class AAIController;
 
 UCLASS()
 class ULTIMATECOURSE_API AEnemy : public ACharacter, public IIHitInterface
@@ -62,5 +63,13 @@ private:
 	UPROPERTY(EditDefaultsOnly)
 	float MaxHealthBarDistance = 1000;
 
+	/*
+	 *Navigation
+	 */
 	
+	UPROPERTY(EditInstanceOnly, Category="AI Navigation")
+	TObjectPtr<AActor> CurrentPatrolTarget;
+	UPROPERTY(EditInstanceOnly, Category="AI Navigation")
+	TArray<AActor*> PatrolTargets;
+	TObjectPtr<AAIController> AiController;
 };
