@@ -33,13 +33,15 @@ AEnemy::AEnemy()
 	HealthBarComponent = CreateDefaultSubobject<UHealthBarComponent>(FName("HealthBar"));
 	HealthBarComponent->SetupAttachment(GetRootComponent());
 	HealthBarComponent->SetAbsolute(false, false, false);
-
+	
+	GetCharacterMovement()->MaxWalkSpeed = 75.f;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	bUseControllerRotationYaw = false;
 
 	PawnSensingComponent = CreateDefaultSubobject<UPawnSensingComponent>(FName("PawnSensing"));
 	PawnSensingComponent->SetPeripheralVisionAngle(45.f);
 	PawnSensingComponent->SightRadius = 4000;
+
 	
 
 }
@@ -197,6 +199,8 @@ FName AEnemy::GetDirectionFromHitPoint(const FVector& HitPoint) const
 
 void AEnemy::CheckMaxHealthBarDist()
 {
+	if(EnemyState <= EEnemyState::EES_Patrolling )return;
+	
 	if(Damager)
 	{
 		if(FVector::Distance( Damager->GetActorLocation(), GetActorLocation()) > MaxHealthBarDistance)
@@ -257,11 +261,16 @@ void AEnemy::PatrolTimerFinished() const
 
 void AEnemy::OnPawnSpotted(APawn* Pawn)
 {
+	if(EnemyState != EEnemyState::EES_Patrolling) return;
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, Pawn->GetHumanReadableName());
 	
-	if(const TObjectPtr<ASlashCharacter> AsCharacter = Cast<ASlashCharacter>(Pawn))
+	if(Pawn->ActorHasTag(FName("SlashCharacter")))
 	{
-		MoveToTarget(AsCharacter);
+		GetWorldTimerManager().ClearTimer(PatrolTimer);
+		EnemyState = EEnemyState::EES_Chasing;
+		GetCharacterMovement()->MaxWalkSpeed = 300.f;
+		MoveToTarget(Pawn);
+		Damager = Pawn;
 	}
 }
 

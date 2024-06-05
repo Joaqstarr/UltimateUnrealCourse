@@ -90,4 +90,6 @@ private:
 	TObjectPtr<UPawnSensingComponent> PawnSensingComponent;
 	UFUNCTION()
 	void OnPawnSpotted( APawn* Pawn);
+	
+	EEnemyState EnemyState = EEnemyState::EES_Patrolling;
 };
