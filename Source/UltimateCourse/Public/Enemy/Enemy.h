@@ -58,10 +58,15 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UParticleSystem> HitEffect;
-	TObjectPtr<APawn> Damager;
-	UPROPERTY(EditDefaultsOnly)
-	float MaxHealthBarDistance = 1000;
-	void CheckMaxHealthBarDist();
+	TObjectPtr<APawn> CombatTarget;
+	UPROPERTY(EditDefaultsOnly, Category=Combat)
+	float CombatRadius = 1000;
+	UPROPERTY(EditDefaultsOnly, Category=Combat)
+	float AttackRadius = 150;
+	void CheckCombatTarget();
+
+	bool InTargetRange(const AActor* Target, const float Radius) const;
+	
 	/*
 	 *Navigation
 	 */

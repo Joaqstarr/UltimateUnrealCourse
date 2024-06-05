@@ -101,7 +101,7 @@ void AEnemy::Tick(float DeltaTime)
 	
 	UpdatePatrolPoints();
 
-	CheckMaxHealthBarDist();
+	CheckCombatTarget();
 }
 
 // Called to bind functionality to input
@@ -139,7 +139,7 @@ void AEnemy::GetHit_Implementation(const FVector& ImpactPoint)
 float AEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator,
 	AActor* DamageCauser)
 {
-	Damager = EventInstigator->GetPawn();
+	CombatTarget = EventInstigator->GetPawn();
 	if(Attributes)
 	{
 		Attributes->ReceiveDamage(DamageAmount);
@@ -197,15 +197,15 @@ FName AEnemy::GetDirectionFromHitPoint(const FVector& HitPoint) const
 	return FName("Back");
 }
 
-void AEnemy::CheckMaxHealthBarDist()
+void AEnemy::CheckCombatTarget()
 {
 	if(EnemyState <= EEnemyState::EES_Patrolling )return;
 	
-	if(Damager)
+	if(CombatTarget)
 	{
-		if(FVector::Distance( Damager->GetActorLocation(), GetActorLocation()) > MaxHealthBarDistance)
-		{
-			Damager = nullptr;
+		if(!InTargetRange(CombatTarget, CombatRadius))
+         		{
+			CombatTarget = nullptr;
 			if(HealthBarComponent)
 			{
 				HealthBarComponent->SetVisibility(false);
@@ -213,8 +213,30 @@ void AEnemy::CheckMaxHealthBarDist()
 			EnemyState = EEnemyState::EES_Patrolling;
 			GetCharacterMovement()->MaxWalkSpeed = 125.f;
 			CurrentPatrolTarget = this;
+
+			UE_LOG(LogTemp, Warning, TEXT("Lose Interest"));
+
+		}else if(!InTargetRange(CombatTarget, AttackRadius) && EnemyState != EEnemyState::EES_Chasing)
+		{
+			//Outside Attack Range
+			
+			EnemyState = EEnemyState::EES_Chasing;
+			GetCharacterMovement()->MaxWalkSpeed = 300;
+			MoveToTarget(CombatTarget);
+			UE_LOG(LogTemp, Warning, TEXT("Chase Player"));
+
+		}else if(InTargetRange(CombatTarget, AttackRadius) && EnemyState != EEnemyState::EES_Attacking)
+		{
+			EnemyState = EEnemyState::EES_Attacking;
+			// TODO: AttackMontage
+			UE_LOG(LogTemp, Warning, TEXT("Attack"));
 		}
 	}
+}
+
+bool AEnemy::InTargetRange(const AActor* Target, const float Radius) const
+{
+	return FVector::Distance(GetActorLocation(), Target->GetActorLocation()) < Radius;
 }
 
 void AEnemy::UpdatePatrolPoints()
@@ -273,7 +295,7 @@ void AEnemy::OnPawnSpotted(APawn* Pawn)
 		EnemyState = EEnemyState::EES_Chasing;
 		GetCharacterMovement()->MaxWalkSpeed = 300.f;
 		MoveToTarget(Pawn);
-		Damager = Pawn;
+		CombatTarget = Pawn;
 	}
 }
 
