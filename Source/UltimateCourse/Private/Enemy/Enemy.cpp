@@ -34,7 +34,7 @@ AEnemy::AEnemy()
 	HealthBarComponent->SetupAttachment(GetRootComponent());
 	HealthBarComponent->SetAbsolute(false, false, false);
 	
-	GetCharacterMovement()->MaxWalkSpeed = 75.f;
+	GetCharacterMovement()->MaxWalkSpeed = 125.f;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	bUseControllerRotationYaw = false;
 
@@ -210,6 +210,9 @@ void AEnemy::CheckMaxHealthBarDist()
 			{
 				HealthBarComponent->SetVisibility(false);
 			}
+			EnemyState = EEnemyState::EES_Patrolling;
+			GetCharacterMovement()->MaxWalkSpeed = 125.f;
+			CurrentPatrolTarget = this;
 		}
 	}
 }
