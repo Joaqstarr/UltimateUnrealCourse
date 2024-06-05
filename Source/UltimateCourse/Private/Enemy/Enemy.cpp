@@ -140,6 +140,13 @@ float AEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AC
 	AActor* DamageCauser)
 {
 	CombatTarget = EventInstigator->GetPawn();
+	if(EnemyState <= EEnemyState::EES_Patrolling)
+	{
+		EnemyState = EEnemyState::EES_Chasing;
+		GetCharacterMovement()->MaxWalkSpeed = 300;
+		MoveToTarget(CombatTarget);
+	}
+
 	if(Attributes)
 	{
 		Attributes->ReceiveDamage(DamageAmount);
@@ -148,6 +155,7 @@ float AEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AC
 		{
 			HealthBarComponent->SetHealthPercent(Attributes->GetHealthPercent());
 		}
+
 		return DamageAmount;
 
 	}	
@@ -214,7 +222,6 @@ void AEnemy::CheckCombatTarget()
 			GetCharacterMovement()->MaxWalkSpeed = 125.f;
 			CurrentPatrolTarget = this;
 
-			UE_LOG(LogTemp, Warning, TEXT("Lose Interest"));
 
 		}else if(!InTargetRange(CombatTarget, AttackRadius) && EnemyState != EEnemyState::EES_Chasing)
 		{
@@ -223,13 +230,11 @@ void AEnemy::CheckCombatTarget()
 			EnemyState = EEnemyState::EES_Chasing;
 			GetCharacterMovement()->MaxWalkSpeed = 300;
 			MoveToTarget(CombatTarget);
-			UE_LOG(LogTemp, Warning, TEXT("Chase Player"));
 
 		}else if(InTargetRange(CombatTarget, AttackRadius) && EnemyState != EEnemyState::EES_Attacking)
 		{
 			EnemyState = EEnemyState::EES_Attacking;
 			// TODO: AttackMontage
-			UE_LOG(LogTemp, Warning, TEXT("Attack"));
 		}
 	}
 }
@@ -270,11 +275,13 @@ void AEnemy::MoveToTarget(TObjectPtr<AActor> Target) const
 
 		FNavPathSharedPtr NavPath;
 		AiController->MoveTo(MoveRequest, &NavPath);
-		TArray<FNavPathPoint>& PathPoints = NavPath->GetPathPoints();
-		for(FNavPathPoint& Point : PathPoints)
-		{
-			const FVector& Location = Point.Location;
-			DrawDebugSphere(GetWorld(), Location, 12.f, 12, FColor::Green, false, 10.f);
+		if(NavPath){
+			TArray<FNavPathPoint>& PathPoints = NavPath->GetPathPoints();
+			for(FNavPathPoint& Point : PathPoints)
+			{
+				const FVector& Location = Point.Location;
+				DrawDebugSphere(GetWorld(), Location, 12.f, 12, FColor::Green, false, 10.f);
+			}
 		}
 	}
 }
