@@ -13,6 +13,8 @@
 #include "HUD/HealthBarComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "AIController.h"
+#include "Characters/SlashCharacter.h"
+#include "Perception/PawnSensingComponent.h"
 
 // Sets default values
 AEnemy::AEnemy()
@@ -35,6 +37,11 @@ AEnemy::AEnemy()
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	bUseControllerRotationYaw = false;
 
+	PawnSensingComponent = CreateDefaultSubobject<UPawnSensingComponent>(FName("PawnSensing"));
+	PawnSensingComponent->SetPeripheralVisionAngle(45.f);
+	PawnSensingComponent->SightRadius = 4000;
+	
+
 }
 
 // Called when the game starts or when spawned
@@ -49,6 +56,9 @@ void AEnemy::BeginPlay()
 	AiController = Cast<AAIController>(GetController());
 
 	MoveToTarget(CurrentPatrolTarget);
+
+	
+	PawnSensingComponent->OnSeePawn.AddDynamic(this, &AEnemy::OnPawnSpotted);
 }
 
 void AEnemy::PlayHitReactMontage(const FName& Section) const
@@ -240,8 +250,18 @@ void AEnemy::MoveToTarget(TObjectPtr<AActor> Target) const
 	}
 }
 
-void AEnemy::PatrolTimerFinished()
+void AEnemy::PatrolTimerFinished() const
 {
 	MoveToTarget(CurrentPatrolTarget);
+}
+
+void AEnemy::OnPawnSpotted(APawn* Pawn)
+{
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, Pawn->GetHumanReadableName());
+	
+	if(const TObjectPtr<ASlashCharacter> AsCharacter = Cast<ASlashCharacter>(Pawn))
+	{
+		MoveToTarget(AsCharacter);
+	}
 }
 

@@ -8,6 +8,7 @@
 #include "Characters/CharacterTypes.h"
 #include "Enemy.generated.h"
 
+class UPawnSensingComponent;
 class UHealthBarComponent;
 class UAnimMontage;
 class USoundBase;
@@ -23,16 +24,6 @@ class ULTIMATECOURSE_API AEnemy : public ACharacter, public IIHitInterface
 public:
 	// Sets default values for this character's properties
 	AEnemy();
-
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-	void PlayHitReactMontage(const FName& Section) const;
-	void Die();
-	UPROPERTY(BlueprintReadOnly)
-	EDeathPose DeathPose = EDeathPose::EDP_Alive;
-
-public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
@@ -41,7 +32,15 @@ public:
 
 	virtual void GetHit_Implementation(const FVector& ImpactPoint) override;
 
-	float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
+	
+protected:
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;
+	void PlayHitReactMontage(const FName& Section) const;
+	void Die();
+	UPROPERTY(BlueprintReadOnly)
+	EDeathPose DeathPose = EDeathPose::EDP_Alive;
 private:
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UAttributeComponent> Attributes;
@@ -82,5 +81,13 @@ private:
 	UPROPERTY(EditAnywhere, Category="AI Navigation")
 	float PatrolWaitTime = 3.f;
 	FTimerHandle PatrolTimer;
-	void PatrolTimerFinished();
+	void PatrolTimerFinished() const;
+
+	/*
+	 * Ai Aggro
+	 */
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<UPawnSensingComponent> PawnSensingComponent;
+	UFUNCTION()
+	void OnPawnSpotted( APawn* Pawn);
 };
