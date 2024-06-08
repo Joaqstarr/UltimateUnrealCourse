@@ -7,7 +7,6 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "Kismet/KismetMathLibrary.h"
 #include "UltimateCourse/DebugMacros.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "HUD/HealthBarComponent.h"
@@ -28,7 +27,6 @@ AEnemy::AEnemy()
 	GetMesh()->SetGenerateOverlapEvents(true);
 
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
-	Attributes = CreateDefaultSubobject<UAttributeComponent>(FName("Attributes"));
 
 	HealthBarComponent = CreateDefaultSubobject<UHealthBarComponent>(FName("HealthBar"));
 	HealthBarComponent->SetupAttachment(GetRootComponent());
@@ -63,14 +61,6 @@ void AEnemy::BeginPlay()
 	PawnSensingComponent->OnSeePawn.AddDynamic(this, &AEnemy::OnPawnSpotted);
 }
 
-void AEnemy::PlayHitReactMontage(const FName& Section) const
-{
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if(!AnimInstance || !ReactMontage)return;
-
-	AnimInstance->Montage_Play(ReactMontage);
-	AnimInstance->Montage_JumpToSection(Section);
-}
 
 void AEnemy::Die()
 {
@@ -161,48 +151,6 @@ float AEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AC
 	}	
 	
 	return 0;
-}
-
-FName AEnemy::GetDirectionFromHitPoint(const FVector& HitPoint) const
-{
-	const FVector Forward = GetActorForwardVector();
-	const FVector ImpactLowered(HitPoint.X, HitPoint.Y, GetActorLocation().Z);
-	const FVector ToHit = (ImpactLowered - GetActorLocation()).GetSafeNormal();
-	
-	float Angle = UKismetMathLibrary::Acos(FVector::DotProduct(Forward, ToHit));
-	Angle = UKismetMathLibrary::RadiansToDegrees(Angle);
-	const float AngleAbs = UKismetMathLibrary::Abs(Angle);
-
-	const FVector CrossProduct = FVector::CrossProduct(Forward, ToHit);
-	if(CrossProduct.Z < 0)
-	{
-		Angle *= -1;
-	}
-	
-	/*
-	UKismetSystemLibrary::DrawDebugArrow(this, GetActorLocation(), GetActorLocation() + Forward*60.0f, 5.f, FColor::Red, 5.f);
-	UKismetSystemLibrary::DrawDebugArrow(this, GetActorLocation(), GetActorLocation() + ToHit*60.0f, 5.f, FColor::Magenta, 5.f);
-	if(GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(1, 5.f, FColor::Green, FString::Printf(TEXT("Theta: %f"), Angle));
-	}
-	*/
-	
-	if(AngleAbs <45)
-	{
-		return FName("Front");
-	}
-	if(AngleAbs < 135)
-	{
-		if(Angle > 0)
-		{
-			return FName("Right");
-		}else
-		{
-			return FName("Left");
-		}
-	}
-	return FName("Back");
 }
 
 void AEnemy::CheckCombatTarget()

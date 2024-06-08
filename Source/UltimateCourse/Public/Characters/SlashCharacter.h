@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Character.h"
+#include "Characters/BaseCharacter.h"
 #include "InputActionValue.h"
 #include "Characters/CharacterTypes.h"
 #include "SlashCharacter.generated.h"
@@ -15,10 +15,9 @@ class USpringArmComponent;
 class UGroomComponent;
 class AItem;
 class UAnimMontage;
-class AWeapon;
 
 UCLASS()
-class ULTIMATECOURSE_API ASlashCharacter : public ACharacter
+class ULTIMATECOURSE_API ASlashCharacter : public ABaseCharacter
 {
 	GENERATED_BODY()
 
@@ -31,12 +30,15 @@ public:
 	void Look(const FInputActionValue& Value);
 	void Jumping(const FInputActionValue& Value);
 	void Equip(const FInputActionValue& Value);
-	void Attack(const FInputActionValue& Value);
-	UFUNCTION(BlueprintCallable)
-	void ResetAttackState();
+	virtual void ResetAttackState() override;
+	virtual void GetHit_Implementation(const FVector& ImpactPoint) override;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+
+	virtual void Attack() override;
 
 	/*
 	*	Input Callbacks
@@ -59,24 +61,21 @@ protected:
 	/*
 	*	Play Montage Functions
 	*/
-	void PlayAttackMontage();
+	virtual void PlayAttackMontage() override;
 	void PlayEquipMontage(const FName& Section) const;
 	UFUNCTION(BlueprintCallable)
-	void Disarm();
+	void Disarm() const;
 	UFUNCTION(BlueprintCallable)
 	void Arm();
 	UFUNCTION(BlueprintCallable)
 	void ResetEquipState();
-	UFUNCTION(BlueprintCallable)
-	void UpdateWeaponCollision(bool collisionTo);
-	
+
+	virtual bool CanAttack() const override;
 private:
 
-	bool CanAttack();
-	bool CanDisarm();
-	bool CanArm();
-	UPROPERTY(VisibleAnywhere, Category = "Weapon");
-	TObjectPtr<AWeapon> EquippedWeapon;
+
+	bool CanDisarm() const;
+	bool CanArm() const;
 
 	ECharacterState CharacterState = ECharacterState::ECS_Unequipped;
 	EActionState ActionState = EActionState::EAS_Unoccupied;
@@ -104,8 +103,7 @@ private:
 	/*
 	* ANIMATION MONTAGES
 	*/
-	UPROPERTY()
-	TObjectPtr<UAnimMontage> AttackMontage;
+
 	UPROPERTY()
 	TObjectPtr <UAnimMontage> EquipMontage;
 

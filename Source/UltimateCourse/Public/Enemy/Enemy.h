@@ -3,21 +3,16 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Character.h"
-#include "Interfaces/IHitInterface.h"
+#include "Characters/BaseCharacter.h"
 #include "Characters/CharacterTypes.h"
 #include "Enemy.generated.h"
 
 class UPawnSensingComponent;
 class UHealthBarComponent;
-class UAnimMontage;
-class USoundBase;
-class UParticleSystem;
-class UAttributeComponent;
 class AAIController;
 
 UCLASS()
-class ULTIMATECOURSE_API AEnemy : public ACharacter, public IIHitInterface
+class ULTIMATECOURSE_API AEnemy : public ABaseCharacter
 {
 	GENERATED_BODY()
 
@@ -37,27 +32,15 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-	void PlayHitReactMontage(const FName& Section) const;
-	void Die();
+	virtual void Die() override;
 	UPROPERTY(BlueprintReadOnly)
 	EDeathPose DeathPose = EDeathPose::EDP_Alive;
 private:
-	UPROPERTY(VisibleAnywhere)
-	TObjectPtr<UAttributeComponent> Attributes;
+
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UHealthBarComponent> HealthBarComponent;
-	
-	UPROPERTY(EditDefaultsOnly, Category=Montages)
-	TObjectPtr<UAnimMontage> ReactMontage;
-	UPROPERTY(EditDefaultsOnly, Category=Montages)
-	TObjectPtr<UAnimMontage> DeathMontage;
-	FName GetDirectionFromHitPoint(const FVector& HitPoint) const;
 
-	UPROPERTY(EditAnywhere)
-	TObjectPtr<USoundBase> HitSound;
 
-	UPROPERTY(EditAnywhere)
-	TObjectPtr<UParticleSystem> HitEffect;
 	TObjectPtr<APawn> CombatTarget;
 	UPROPERTY(EditDefaultsOnly, Category=Combat)
 	float CombatRadius = 1000;

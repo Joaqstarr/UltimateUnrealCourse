@@ -2,7 +2,6 @@
 
 
 #include "Characters/SlashCharacter.h"
-#include "InputMappingContext.h"
 #include "EnhancedInputComponent.h"
 #include "InputAction.h"
 #include "EnhancedInputSubsystems.h"
@@ -51,10 +50,12 @@ void ASlashCharacter::BeginPlay()
 	Tags.Add(FName("SlashCharacter"));
 	
 	if (TObjectPtr <APlayerController> PlayerController = Cast<APlayerController>(GetController())) {
-		if (TObjectPtr<UEnhancedInputLocalPlayerSubsystem> inputSubsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer())) {
+		if (TObjectPtr<UEnhancedInputLocalPlayerSubsystem> InputSubsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer())) {
 
-			inputSubsystem->AddMappingContext(SlashContext, 0, true);
-			
+			FModifyContextOptions Options;
+			Options.bIgnoreAllPressedKeysUntilRelease = true;
+			Options.bForceImmediately = false;
+			InputSubsystem->AddMappingContext(SlashContext, 0, Options);
 		}
 	}
 }
@@ -125,8 +126,7 @@ void ASlashCharacter::Equip(const FInputActionValue& Value)
 	if (ActionState == EActionState::EAS_Attacking)return;
 
 	if (OverlappingItem) {
-		TObjectPtr<AWeapon> asWeapon = Cast<AWeapon>(OverlappingItem);
-		if (asWeapon) {
+		if (TObjectPtr<AWeapon> asWeapon = Cast<AWeapon>(OverlappingItem)) {
 			asWeapon->Equip(GetMesh(), FName("RightHandSocket"), this, this);
 			OverlappingItem = nullptr;
 			if(EquippedWeapon)
@@ -179,7 +179,7 @@ void ASlashCharacter::PlayEquipMontage(const FName& Section) const
 
 }
 
-void ASlashCharacter::Disarm()
+void ASlashCharacter::Disarm() const
 {
 	if (EquippedWeapon) {
 		EquippedWeapon->AttachMeshToSocket(GetMesh(), FName("SpineSocket"));
@@ -199,15 +199,9 @@ void ASlashCharacter::ResetEquipState()
 	ActionState = EActionState::EAS_Unoccupied;
 }
 
-void ASlashCharacter::UpdateWeaponCollision(bool collisionTo)
-{
-	if(EquippedWeapon)
-	{
-		EquippedWeapon->UpdateWeaponCollision(collisionTo);
-	}
-}
 
-void ASlashCharacter::Attack(const FInputActionValue& Value)
+
+void ASlashCharacter::Attack()
 {
 	if (!CanAttack())return;
 
@@ -223,20 +217,21 @@ void ASlashCharacter::ResetAttackState()
 	ActionState = EActionState::EAS_Unoccupied;
 }
 
+void ASlashCharacter::GetHit_Implementation(const FVector& ImpactPoint)
+{
+	Super::GetHit_Implementation(ImpactPoint);
+}
+
 void ASlashCharacter::PlayAttackMontage()
 {
-
-	TObjectPtr<UAnimInstance> AnimInstance = GetMesh()->GetAnimInstance();
-	if (AnimInstance && AttackMontage) {
+	if (const TObjectPtr<UAnimInstance> AnimInstance = GetMesh()->GetAnimInstance(); AnimInstance && AttackMontage) {
 
 		AnimInstance->Montage_Play(AttackMontage, 1.3f);
 
 		FName AttackToUse = FName("Attack 1");
-		const int32 Selection = FMath::RandRange(0, 2);
 
-		switch (Selection) {
+		switch (FMath::RandRange(0, 2)) {
 		case 0:
-			AttackToUse = FName("Attack 1");
 			break;
 		case 1:
 			AttackToUse = FName("Attack 2");
@@ -244,6 +239,10 @@ void ASlashCharacter::PlayAttackMontage()
 		case 2:
 			AttackToUse = FName("Attack 3");
 			break;
+		default:
+			AttackToUse = FName("Attack 1");
+			break;
+
 		}
 
 		AnimInstance->Montage_JumpToSection(AttackToUse);
@@ -253,17 +252,17 @@ void ASlashCharacter::PlayAttackMontage()
 
 
 
-bool ASlashCharacter::CanAttack()
+bool ASlashCharacter::CanAttack() const
 {
 	return CharacterState != ECharacterState::ECS_Unequipped && ActionState == EActionState::EAS_Unoccupied;
 }
 
-bool ASlashCharacter::CanDisarm()
+bool ASlashCharacter::CanDisarm() const
 {
 	return CharacterState != ECharacterState::ECS_Unequipped && EquippedWeapon;
 }
 
-bool ASlashCharacter::CanArm()
+bool ASlashCharacter::CanArm() const
 {
 	return CharacterState == ECharacterState::ECS_Unequipped && ActionState == EActionState::EAS_Unoccupied && EquippedWeapon;
 }
