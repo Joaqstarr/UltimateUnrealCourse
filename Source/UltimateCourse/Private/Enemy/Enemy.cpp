@@ -13,6 +13,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "AIController.h"
 #include "Characters/SlashCharacter.h"
+#include "Items/Weapons/Weapon.h"
 #include "Perception/PawnSensingComponent.h"
 
 // Sets default values
@@ -59,6 +60,13 @@ void AEnemy::BeginPlay()
 
 	
 	PawnSensingComponent->OnSeePawn.AddDynamic(this, &AEnemy::OnPawnSpotted);
+	if(const TObjectPtr<UWorld> World = GetWorld(); World && WeaponClass)
+	{
+		AWeapon* DefaultWeapon = World->SpawnActor<AWeapon>(WeaponClass);
+		DefaultWeapon->Equip(GetMesh(), FName("RightHandSocket"), this, this);
+		EquippedWeapon = DefaultWeapon;
+		
+	}
 }
 
 
@@ -151,6 +159,15 @@ float AEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AC
 	}	
 	
 	return 0;
+}
+
+void AEnemy::Destroyed()
+{
+	Super::Destroyed();
+	if(EquippedWeapon)
+	{
+		EquippedWeapon->Destroy();
+	}
 }
 
 void AEnemy::CheckCombatTarget()

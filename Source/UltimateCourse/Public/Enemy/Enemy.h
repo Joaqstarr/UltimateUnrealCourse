@@ -10,6 +10,7 @@
 class UPawnSensingComponent;
 class UHealthBarComponent;
 class AAIController;
+class AWeapon;
 
 UCLASS()
 class ULTIMATECOURSE_API AEnemy : public ABaseCharacter
@@ -28,7 +29,7 @@ public:
 	virtual void GetHit_Implementation(const FVector& ImpactPoint) override;
 
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
-	
+	virtual void Destroyed() override;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -49,6 +50,9 @@ private:
 	void CheckCombatTarget();
 
 	bool InTargetRange(const AActor* Target, const float Radius) const;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<AWeapon> WeaponClass;
 	
 	/*
 	 *Navigation
