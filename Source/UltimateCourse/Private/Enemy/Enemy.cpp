@@ -90,6 +90,44 @@ void AEnemy::Die()
 	AnimInstance->Montage_Play(DeathMontage);
 
 	AnimInstance->Montage_JumpToSection(FName(SectionName));
+	PrimaryActorTick.bCanEverTick = false;
+
+}
+
+void AEnemy::Attack()
+{
+	Super::Attack();
+	PlayAttackMontage();
+}
+
+void AEnemy::PlayAttackMontage()
+{
+	Super::PlayAttackMontage();
+
+	if (const TObjectPtr<UAnimInstance> AnimInstance = GetMesh()->GetAnimInstance(); AnimInstance && AttackMontage) {
+
+		AnimInstance->Montage_Play(AttackMontage, 1.3f);
+
+		FName AttackToUse = FName("Attack 1");
+
+		switch (FMath::RandRange(0, 2)) {
+		case 0:
+			break;
+		case 1:
+			AttackToUse = FName("Attack 2");
+			break;
+		case 2:
+			AttackToUse = FName("Attack 3");
+			break;
+		default:
+			AttackToUse = FName("Attack 1");
+			break;
+
+		}
+
+		AnimInstance->Montage_JumpToSection(AttackToUse);
+
+	}
 }
 
 // Called every frame
@@ -200,6 +238,8 @@ void AEnemy::CheckCombatTarget()
 		{
 			EnemyState = EEnemyState::EES_Attacking;
 			// TODO: AttackMontage
+
+			Attack();
 		}
 	}
 }
@@ -236,7 +276,7 @@ void AEnemy::MoveToTarget(TObjectPtr<AActor> Target) const
 	{
 		FAIMoveRequest MoveRequest;
 		MoveRequest.SetGoalActor(Target);
-		MoveRequest.SetAcceptanceRadius(15.f);
+		MoveRequest.SetAcceptanceRadius(60.f);
 
 		FNavPathSharedPtr NavPath;
 		AiController->MoveTo(MoveRequest, &NavPath);
