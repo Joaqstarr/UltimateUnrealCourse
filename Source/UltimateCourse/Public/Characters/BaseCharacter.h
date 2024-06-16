@@ -27,6 +27,8 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	virtual void ResetAttackState();
+	bool IsAlive() const;
+	virtual void HandleDamage( float DamageAmount);
 
 protected:
 	virtual void BeginPlay() override;
@@ -57,6 +59,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category=Montages)
 	TObjectPtr<UAnimMontage> DeathMontage;
 
+	void PlayHitSound(const FVector& Location) const;
+	void PlayHitParticle(const FVector& Location) const;
+private:
 	/*
 	 *Effects
 	 */

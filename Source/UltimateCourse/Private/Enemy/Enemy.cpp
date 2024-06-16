@@ -7,10 +7,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "UltimateCourse/DebugMacros.h"
-#include "Kismet/KismetSystemLibrary.h"
 #include "HUD/HealthBarComponent.h"
-#include "Kismet/GameplayStatics.h"
 #include "AIController.h"
 #include "Characters/SlashCharacter.h"
 #include "Items/Weapons/Weapon.h"
@@ -92,6 +89,8 @@ void AEnemy::Die()
 	AnimInstance->Montage_JumpToSection(FName(SectionName));
 	PrimaryActorTick.bCanEverTick = false;
 
+	EnemyState = EEnemyState::EES_Dead;
+
 }
 
 void AEnemy::Attack()
@@ -130,6 +129,16 @@ void AEnemy::PlayAttackMontage()
 	}
 }
 
+bool AEnemy::IsDead() const
+{
+	return EnemyState == EEnemyState::EES_Dead;
+}
+
+bool AEnemy::CanAttack() const
+{
+	return !IsOutsideAttackRadius() && !IsAttacking() && !IsDead();
+}
+
 // Called every frame
 void AEnemy::Tick(float DeltaTime)
 {
@@ -140,63 +149,27 @@ void AEnemy::Tick(float DeltaTime)
 	CheckCombatTarget();
 }
 
-// Called to bind functionality to input
-void AEnemy::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
-}
-
 void AEnemy::GetHit_Implementation(const FVector& ImpactPoint)
 {
-	//DRAW_SPHERE_WITH_DETAILS(ImpactPoint, FColor::Green, 10, 4.f);
-	if(Attributes && Attributes->IsAlive())
+	if(Attributes && IsAlive())
 	{
-		if(HealthBarComponent)
-		{
-			HealthBarComponent->SetVisibility(true);
-		}
+		SetHealthBarVisibility(true);
 		PlayHitReactMontage(GetDirectionFromHitPoint(ImpactPoint));
-	}else
-	{
-		
-		Die();
 	}
+	else Die();
 
-	if(HitSound)
-		UGameplayStatics::PlaySoundAtLocation(this, HitSound, ImpactPoint);
 
-	if(HitEffect)
-	{
-		UGameplayStatics::SpawnEmitterAtLocation(this, HitEffect, ImpactPoint, FRotator::ZeroRotator, FVector(1), true, EPSCPoolMethod::None, true);
-	}
+	PlayHitSound(ImpactPoint);
+	PlayHitParticle(ImpactPoint);
 }
 
 float AEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator,
 	AActor* DamageCauser)
 {
 	CombatTarget = EventInstigator->GetPawn();
-	if(EnemyState <= EEnemyState::EES_Patrolling)
-	{
-		EnemyState = EEnemyState::EES_Chasing;
-		GetCharacterMovement()->MaxWalkSpeed = 300;
-		MoveToTarget(CombatTarget);
-	}
-
-	if(Attributes)
-	{
-		Attributes->ReceiveDamage(DamageAmount);
-
-		if(HealthBarComponent)
-		{
-			HealthBarComponent->SetHealthPercent(Attributes->GetHealthPercent());
-		}
-
-		return DamageAmount;
-
-	}	
-	
-	return 0;
+	ChaseTarget();
+	HandleDamage(DamageAmount);
+	return  DamageAmount;
 }
 
 void AEnemy::Destroyed()
@@ -208,39 +181,77 @@ void AEnemy::Destroyed()
 	}
 }
 
+void AEnemy::HandleDamage(float DamageAmount)
+{
+	Super::HandleDamage(DamageAmount);
+	HealthBarComponent->SetHealthPercent(Attributes->GetHealthPercent());
+}
+
+void AEnemy::SetHealthBarVisibility(bool Visibility) const
+{
+	if(HealthBarComponent)
+	{
+		if(HealthBarComponent)
+			HealthBarComponent->SetVisibility(Visibility);
+	}
+}
+
+void AEnemy::LoseInterest()
+{
+	CombatTarget = nullptr;
+	SetHealthBarVisibility(false);
+}
+
+void AEnemy::StartPatrolling()
+{
+	EnemyState = EEnemyState::EES_Patrolling;
+	GetCharacterMovement()->MaxWalkSpeed = PatrollingSpeed;
+	CurrentPatrolTarget = this;
+}
+
+void AEnemy::ChaseTarget()
+{
+	EnemyState = EEnemyState::EES_Chasing;
+	GetCharacterMovement()->MaxWalkSpeed = ChasingSpeed;
+	MoveToTarget(CombatTarget);
+}
+
+bool AEnemy::IsOutsideAttackRadius() const
+{
+	return !InTargetRange(CombatTarget, AttackRadius);
+}
+
+bool AEnemy::IsChasing() const
+{
+	return EnemyState == EEnemyState::EES_Chasing;
+}
+
+bool AEnemy::IsAttacking() const
+{
+	return EnemyState == EEnemyState::EES_Attacking;
+}
+
 void AEnemy::CheckCombatTarget()
 {
 	if(EnemyState <= EEnemyState::EES_Patrolling )return;
+	if(!CombatTarget)return;
 	
-	if(CombatTarget)
+	if(!InTargetRange(CombatTarget, CombatRadius))
 	{
-		if(!InTargetRange(CombatTarget, CombatRadius))
-         		{
-			CombatTarget = nullptr;
-			if(HealthBarComponent)
-			{
-				HealthBarComponent->SetVisibility(false);
-			}
-			EnemyState = EEnemyState::EES_Patrolling;
-			GetCharacterMovement()->MaxWalkSpeed = 125.f;
-			CurrentPatrolTarget = this;
-
-
-		}else if(!InTargetRange(CombatTarget, AttackRadius) && EnemyState != EEnemyState::EES_Chasing)
-		{
-			//Outside Attack Range
-			
-			EnemyState = EEnemyState::EES_Chasing;
-			GetCharacterMovement()->MaxWalkSpeed = 300;
-			MoveToTarget(CombatTarget);
-
-		}else if(InTargetRange(CombatTarget, AttackRadius) && EnemyState != EEnemyState::EES_Attacking)
-		{
-			EnemyState = EEnemyState::EES_Attacking;
-			// TODO: AttackMontage
-
-			Attack();
-		}
+		ClearAttackTimer();
+		LoseInterest();
+		if(EnemyState == EEnemyState::EES_Engaged)StartPatrolling();
+		
+	}
+	else if(IsOutsideAttackRadius() &&  !IsChasing())
+	{
+		ClearAttackTimer();
+		if(EnemyState == EEnemyState::EES_Engaged) ChaseTarget();
+	}
+	else if(CanAttack())
+	{
+		ClearAttackTimer();
+		StartAttackTimer();
 	}
 }
 
@@ -298,16 +309,27 @@ void AEnemy::PatrolTimerFinished() const
 
 void AEnemy::OnPawnSpotted(APawn* Pawn)
 {
-	if(EnemyState != EEnemyState::EES_Patrolling) return;
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, Pawn->GetHumanReadableName());
+	const bool bShouldChaseTarger = EnemyState < EEnemyState::EES_Chasing &&
+		!IsDead() && Pawn->ActorHasTag(FName("SlashCharacter"));
 	
-	if(Pawn->ActorHasTag(FName("SlashCharacter")))
-	{
-		GetWorldTimerManager().ClearTimer(PatrolTimer);
-		EnemyState = EEnemyState::EES_Chasing;
-		GetCharacterMovement()->MaxWalkSpeed = 300.f;
-		MoveToTarget(Pawn);
-		CombatTarget = Pawn;
-	}
+	if(!bShouldChaseTarger) return;
+	
+	GetWorldTimerManager().ClearTimer(PatrolTimer);
+	CombatTarget = Pawn;
+	ChaseTarget();
+}
+
+
+void AEnemy::StartAttackTimer()
+{
+	EnemyState = EEnemyState::EES_Attacking;
+
+	const float AttackTime = FMath::RandRange(AttackMin, AttackMax);
+	GetWorldTimerManager().SetTimer(AttackTimer, this, &AEnemy::Attack, AttackTime);
+}
+
+void AEnemy::ClearAttackTimer()
+{
+	GetWorldTimerManager().ClearTimer(AttackTimer);
 }
 

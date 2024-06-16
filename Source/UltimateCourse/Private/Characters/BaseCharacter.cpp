@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 #include "Characters/BaseCharacter.h"
 #include "Items/Weapons/Weapon.h"
+#include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Components/AttributeComponent.h"
 
@@ -60,6 +61,19 @@ void ABaseCharacter::ResetAttackState()
 {
 }
 
+bool ABaseCharacter::IsAlive() const
+{
+	return Attributes->IsAlive();
+}
+
+void ABaseCharacter::HandleDamage(float DamageAmount)
+{
+	if(Attributes)
+	{
+		Attributes->ReceiveDamage(DamageAmount);
+	}
+}
+
 FName ABaseCharacter::GetDirectionFromHitPoint(const FVector& HitPoint) const
 {
 	const FVector Forward = GetActorForwardVector();
@@ -91,6 +105,22 @@ FName ABaseCharacter::GetDirectionFromHitPoint(const FVector& HitPoint) const
 		}
 	}
 	return FName("Back");
+}
+
+void ABaseCharacter::PlayHitSound(const FVector& Location) const
+{
+	if(HitSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, HitSound, Location);
+	}
+}
+
+void ABaseCharacter::PlayHitParticle(const FVector& Location) const
+{
+	if(HitEffect)
+	{
+		UGameplayStatics::SpawnEmitterAtLocation(this, HitEffect, Location, FRotator::ZeroRotator, FVector(1), true, EPSCPoolMethod::None, true);
+	}
 }
 
 
