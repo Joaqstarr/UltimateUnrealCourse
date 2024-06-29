@@ -222,36 +222,6 @@ void ASlashCharacter::GetHit_Implementation(const FVector& ImpactPoint)
 	Super::GetHit_Implementation(ImpactPoint);
 }
 
-void ASlashCharacter::PlayAttackMontage()
-{
-	if (const TObjectPtr<UAnimInstance> AnimInstance = GetMesh()->GetAnimInstance(); AnimInstance && AttackMontage) {
-
-		AnimInstance->Montage_Play(AttackMontage, 1.3f);
-
-		FName AttackToUse = FName("Attack 1");
-
-		switch (FMath::RandRange(0, 2)) {
-		case 0:
-			break;
-		case 1:
-			AttackToUse = FName("Attack 2");
-			break;
-		case 2:
-			AttackToUse = FName("Attack 3");
-			break;
-		default:
-			AttackToUse = FName("Attack 1");
-			break;
-
-		}
-
-		AnimInstance->Montage_JumpToSection(AttackToUse);
-
-	}
-}
-
-
-
 bool ASlashCharacter::CanAttack() const
 {
 	return CharacterState != ECharacterState::ECS_Unequipped && ActionState == EActionState::EAS_Unoccupied;

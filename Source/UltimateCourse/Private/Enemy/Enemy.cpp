@@ -2,7 +2,6 @@
 
 
 #include "Enemy/Enemy.h"
-
 #include "Components/AttributeComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -69,65 +68,37 @@ void AEnemy::BeginPlay()
 
 void AEnemy::Die()
 {
-	if(HealthBarComponent)
-	{
-		HealthBarComponent->SetVisibility(false);
-	}
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	
-	SetLifeSpan(5.f);
-	if(!AnimInstance || !DeathMontage) return;
-	FString SectionName = FString();
-	const uint8 Selection = FMath::RandRange(1, 5);
-	SectionName = FString("Death" + FString::FromInt(Selection));
-	DeathPose = static_cast<EDeathPose>(Selection);
-	
-	AnimInstance->Montage_Play(DeathMontage);
+	SetHealthBarVisibility(false);
 
-	AnimInstance->Montage_JumpToSection(FName(SectionName));
+	DisableCapsule();
+	SetLifeSpan(DeathLifeSpan);
+	ClearAttackTimer();
+	PlayDeathMontage();
+
+
 	PrimaryActorTick.bCanEverTick = false;
-
 	EnemyState = EEnemyState::EES_Dead;
 
 }
 
+int32 AEnemy::PlayDeathMontage()
+{
+	const uint8 Selection = Super::PlayDeathMontage();
+
+	const EDeathPose Pose = static_cast<EDeathPose>(Selection);
+	if(Pose < EDeathPose::EDP_Max)
+		DeathPose = Pose;
+	
+	return Selection;
+}
+
 void AEnemy::Attack()
 {
+	
 	Super::Attack();
 	PlayAttackMontage();
 }
 
-void AEnemy::PlayAttackMontage()
-{
-	Super::PlayAttackMontage();
-
-	if (const TObjectPtr<UAnimInstance> AnimInstance = GetMesh()->GetAnimInstance(); AnimInstance && AttackMontage) {
-
-		AnimInstance->Montage_Play(AttackMontage, 1.3f);
-
-		FName AttackToUse = FName("Attack 1");
-
-		switch (FMath::RandRange(0, 2)) {
-		case 0:
-			break;
-		case 1:
-			AttackToUse = FName("Attack 2");
-			break;
-		case 2:
-			AttackToUse = FName("Attack 3");
-			break;
-		default:
-			AttackToUse = FName("Attack 1");
-			break;
-
-		}
-
-		AnimInstance->Montage_JumpToSection(AttackToUse);
-
-	}
-}
 
 bool AEnemy::IsDead() const
 {

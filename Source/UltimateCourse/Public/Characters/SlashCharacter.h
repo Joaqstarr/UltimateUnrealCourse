@@ -61,7 +61,6 @@ protected:
 	/*
 	*	Play Montage Functions
 	*/
-	virtual void PlayAttackMontage() override;
 	void PlayEquipMontage(const FName& Section) const;
 	UFUNCTION(BlueprintCallable)
 	void Disarm() const;

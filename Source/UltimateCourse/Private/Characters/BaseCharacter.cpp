@@ -3,6 +3,7 @@
 #include "Items/Weapons/Weapon.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Components/CapsuleComponent.h"
 #include "Components/AttributeComponent.h"
 
 ABaseCharacter::ABaseCharacter()
@@ -18,9 +19,22 @@ void ABaseCharacter::BeginPlay()
 	
 }
 
-void ABaseCharacter::PlayAttackMontage()
+int32 ABaseCharacter::PlayAttackMontage()
 {
+	return PlayRandomMontageSection(AttackMontage, AttackMontageSections);
 }
+
+int32 ABaseCharacter::PlayDeathMontage()
+{
+	return PlayRandomMontageSection(DeathMontage, DeathMontageSections);
+}
+
+void ABaseCharacter::DisableCapsule()
+{
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+}
+
 void ABaseCharacter::PlayHitReactMontage(const FName& Section) const
 {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
@@ -121,6 +135,26 @@ void ABaseCharacter::PlayHitParticle(const FVector& Location) const
 	{
 		UGameplayStatics::SpawnEmitterAtLocation(this, HitEffect, Location, FRotator::ZeroRotator, FVector(1), true, EPSCPoolMethod::None, true);
 	}
+}
+
+void ABaseCharacter::PlayMontageSection(TObjectPtr<UAnimMontage> Montage, const FName& SectionName) const
+{
+	if (const TObjectPtr<UAnimInstance> AnimInstance = GetMesh()->GetAnimInstance(); AnimInstance && Montage)
+	{
+		AnimInstance->Montage_Play(Montage);
+		AnimInstance->Montage_JumpToSection(SectionName, Montage);
+	}
+}
+
+int32 ABaseCharacter::PlayRandomMontageSection(TObjectPtr<UAnimMontage> Montage, const TArray<FName>& SectionNames) const
+{
+	if(SectionNames.Num() <= 0) return -1;
+	
+	const uint32 MaxSectionIndex = SectionNames.Num()-1;
+	const uint32 Selection = FMath::RandRange(0, MaxSectionIndex);
+	
+	PlayMontageSection(Montage, SectionNames[Selection]);
+	return Selection;
 }
 
 

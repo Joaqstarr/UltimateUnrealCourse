@@ -34,7 +34,6 @@ protected:
 	virtual void BeginPlay() override;
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UAttributeComponent> Attributes;
-	virtual void PlayAttackMontage();
 
 	
 	UPROPERTY(VisibleAnywhere, Category = "Weapon")
@@ -59,8 +58,20 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category=Montages)
 	TObjectPtr<UAnimMontage> DeathMontage;
 
+	UPROPERTY(EditAnywhere, Category=Combat)
+	TArray<FName> AttackMontageSections;
+	UPROPERTY(EditAnywhere, Category=Combat)
+	TArray<FName> DeathMontageSections;
+	
 	void PlayHitSound(const FVector& Location) const;
 	void PlayHitParticle(const FVector& Location) const;
+	void PlayMontageSection(TObjectPtr<UAnimMontage> Montage, const FName& SectionName) const;
+	int32 PlayRandomMontageSection(TObjectPtr<UAnimMontage> Montage, const TArray<FName>& SectionNames) const;
+
+	int32 PlayAttackMontage();
+	virtual int32 PlayDeathMontage();
+	void DisableCapsule();
+
 private:
 	/*
 	 *Effects

@@ -33,10 +33,13 @@ protected:
 	virtual void Die() override;
 	UPROPERTY(BlueprintReadOnly)
 	EDeathPose DeathPose;
+
+	virtual int32 PlayDeathMontage() override;
 	UPROPERTY(BlueprintReadOnly)
 	EEnemyState EnemyState = EEnemyState::EES_Patrolling;
+
+	
 	virtual void Attack() override;
-	virtual void PlayAttackMontage() override;
 	bool IsDead() const;
 	virtual  bool CanAttack() const override;
 private:
@@ -51,6 +54,8 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category=Combat)
 	float AttackRadius = 150;
 	void CheckCombatTarget();
+	UPROPERTY(EditAnywhere, Category=Combat)
+	float DeathLifeSpan = 8.f;
 
 	bool InTargetRange(const AActor* Target, const float Radius) const;
 
@@ -86,7 +91,7 @@ private:
 	bool IsOutsideAttackRadius() const;
 	bool IsChasing() const;
 	bool IsAttacking() const;
-
+	
 	/*
 	 * Ai Aggro
 	 */
