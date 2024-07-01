@@ -41,7 +41,9 @@ protected:
 	
 	virtual void Attack() override;
 	bool IsDead() const;
+	bool IsEngaged() const;
 	virtual  bool CanAttack() const override;
+	virtual void ResetAttackState() override;
 private:
 
 	UPROPERTY(VisibleAnywhere)

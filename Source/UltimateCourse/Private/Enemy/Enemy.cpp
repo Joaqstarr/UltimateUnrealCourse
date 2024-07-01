@@ -94,7 +94,7 @@ int32 AEnemy::PlayDeathMontage()
 
 void AEnemy::Attack()
 {
-	
+	EnemyState = EEnemyState::EES_Engaged;
 	Super::Attack();
 	PlayAttackMontage();
 }
@@ -105,9 +105,20 @@ bool AEnemy::IsDead() const
 	return EnemyState == EEnemyState::EES_Dead;
 }
 
+bool AEnemy::IsEngaged() const
+{
+	return EnemyState == EEnemyState::EES_Engaged;
+}
+
 bool AEnemy::CanAttack() const
 {
-	return !IsOutsideAttackRadius() && !IsAttacking() && !IsDead();
+	return !IsOutsideAttackRadius() && !IsAttacking() && !IsDead() && !IsEngaged();
+}
+
+void AEnemy::ResetAttackState()
+{
+	EnemyState = EEnemyState::EES_NoState;
+	CheckCombatTarget();
 }
 
 // Called every frame
@@ -177,7 +188,7 @@ void AEnemy::StartPatrolling()
 {
 	EnemyState = EEnemyState::EES_Patrolling;
 	GetCharacterMovement()->MaxWalkSpeed = PatrollingSpeed;
-	CurrentPatrolTarget = this;
+	MoveToTarget(CurrentPatrolTarget);
 }
 
 void AEnemy::ChaseTarget()
@@ -205,19 +216,25 @@ bool AEnemy::IsAttacking() const
 void AEnemy::CheckCombatTarget()
 {
 	if(EnemyState <= EEnemyState::EES_Patrolling )return;
-	if(!CombatTarget)return;
-	
+	if(!CombatTarget)
+	{
+		ClearAttackTimer();
+		LoseInterest();
+		if(!IsEngaged())StartPatrolling();
+		return;
+	}
+
 	if(!InTargetRange(CombatTarget, CombatRadius))
 	{
 		ClearAttackTimer();
 		LoseInterest();
-		if(EnemyState == EEnemyState::EES_Engaged)StartPatrolling();
+		if(!IsEngaged())StartPatrolling();
 		
 	}
 	else if(IsOutsideAttackRadius() &&  !IsChasing())
 	{
 		ClearAttackTimer();
-		if(EnemyState == EEnemyState::EES_Engaged) ChaseTarget();
+		if(!IsEngaged()) ChaseTarget();
 	}
 	else if(CanAttack())
 	{
