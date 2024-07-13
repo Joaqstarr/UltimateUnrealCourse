@@ -22,55 +22,42 @@ public:
 	ABaseCharacter();
 	virtual void Tick(float DeltaTime) override;
 
-	UFUNCTION(BlueprintCallable)
-	void UpdateWeaponCollision(bool collisionTo);
 
-	UFUNCTION(BlueprintCallable)
-	virtual void ResetAttackState();
-	bool IsAlive() const;
-	virtual void HandleDamage( float DamageAmount);
+
+
 
 protected:
 	virtual void BeginPlay() override;
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UAttributeComponent> Attributes;
-
+	
+	UFUNCTION(BlueprintCallable)
+	void UpdateWeaponCollision(bool collisionTo);
 	
 	UPROPERTY(VisibleAnywhere, Category = "Weapon")
 	TObjectPtr<AWeapon> EquippedWeapon;
-
-	virtual bool CanAttack() const;
+	
 	
 	virtual void Attack();
 	virtual void Die();
+	virtual bool CanAttack() const;
 	void PlayHitReactMontage(const FName& Section) const;
-
-
 	FName GetDirectionFromHitPoint(const FVector& HitPoint) const;
-
-	/*
-	* ANIMATION MONTAGES
-	*/
-	UPROPERTY(EditDefaultsOnly, Category=Montages)
-	TObjectPtr<UAnimMontage> AttackMontage;
-	UPROPERTY(EditDefaultsOnly, Category=Montages)
-	TObjectPtr<UAnimMontage> ReactMontage;
-	UPROPERTY(EditDefaultsOnly, Category=Montages)
-	TObjectPtr<UAnimMontage> DeathMontage;
-
-	UPROPERTY(EditAnywhere, Category=Combat)
-	TArray<FName> AttackMontageSections;
-	UPROPERTY(EditAnywhere, Category=Combat)
-	TArray<FName> DeathMontageSections;
-	
+	void SetAttackMontage(TObjectPtr<UAnimMontage> newMontage);
 	void PlayHitSound(const FVector& Location) const;
 	void PlayHitParticle(const FVector& Location) const;
-	void PlayMontageSection(TObjectPtr<UAnimMontage> Montage, const FName& SectionName) const;
-	int32 PlayRandomMontageSection(TObjectPtr<UAnimMontage> Montage, const TArray<FName>& SectionNames) const;
+	void DisableCapsule();
+	UFUNCTION(BlueprintCallable)
+    virtual void ResetAttackState();
+    bool IsAlive() const;
+    virtual void HandleDamage( float DamageAmount);
+	
 
 	int32 PlayAttackMontage();
 	virtual int32 PlayDeathMontage();
-	void DisableCapsule();
+	
+
+	
 
 private:
 	/*
@@ -81,4 +68,22 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UParticleSystem> HitEffect;
+
+	/*
+	* ANIMATION MONTAGES
+	*/
+	UPROPERTY(EditDefaultsOnly, Category=Montages)
+	TObjectPtr<UAnimMontage> AttackMontage;
+	UPROPERTY(EditDefaultsOnly, Category=Montages)
+	TObjectPtr<UAnimMontage> ReactMontage;
+	UPROPERTY(EditDefaultsOnly, Category=Montages)
+	TObjectPtr<UAnimMontage> DeathMontage;
+	
+	UPROPERTY(EditAnywhere, Category=Combat)
+	TArray<FName> AttackMontageSections;
+	UPROPERTY(EditAnywhere, Category=Combat)
+	TArray<FName> DeathMontageSections;
+
+	void PlayMontageSection(TObjectPtr<UAnimMontage> Montage, const FName& SectionName) const;
+	int32 PlayRandomMontageSection(TObjectPtr<UAnimMontage> Montage, const TArray<FName>& SectionNames) const;
 };

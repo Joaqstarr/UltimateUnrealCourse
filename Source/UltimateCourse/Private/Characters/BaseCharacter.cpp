@@ -10,7 +10,7 @@ ABaseCharacter::ABaseCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	Attributes = CreateDefaultSubobject<UAttributeComponent>(FName("Attributes"));
-
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 }
 
 void ABaseCharacter::BeginPlay()
@@ -119,6 +119,11 @@ FName ABaseCharacter::GetDirectionFromHitPoint(const FVector& HitPoint) const
 		}
 	}
 	return FName("Back");
+}
+
+void ABaseCharacter::SetAttackMontage(TObjectPtr<UAnimMontage> newMontage)
+{
+	AttackMontage = newMontage;
 }
 
 void ABaseCharacter::PlayHitSound(const FVector& Location) const

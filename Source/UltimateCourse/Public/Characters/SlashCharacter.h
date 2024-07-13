@@ -26,24 +26,27 @@ public:
 	ASlashCharacter();
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-	void Move(const FInputActionValue& Value);
-	void Look(const FInputActionValue& Value);
-	void Jumping(const FInputActionValue& Value);
-	void Equip(const FInputActionValue& Value);
+
 	virtual void ResetAttackState() override;
 	virtual void GetHit_Implementation(const FVector& ImpactPoint) override;
 
+	/* Input Callbacks */
+	void Move(const FInputActionValue& Value);
+	void Look(const FInputActionValue& Value);
+	void Jumping(const FInputActionValue& Value);
+	void SheathWeapon();
+	void UnsheathWeapon();
+	void ToggleArmWeapon();
+	void EKeyPressed(const FInputActionValue& Value);
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	void EquipWeapon(AWeapon* Weapon);
 
 	virtual void Attack() override;
-
-	/*
-	*	Input Callbacks
-	*/
-
+	
+	/* Input Callbacks */
 	UPROPERTY(EditAnywhere, Category = "Input")
 	UInputMappingContext* SlashContext;
 
@@ -63,15 +66,15 @@ protected:
 	*/
 	void PlayEquipMontage(const FName& Section) const;
 	UFUNCTION(BlueprintCallable)
-	void Disarm() const;
+	void AttachWeaponToBack() const;
 	UFUNCTION(BlueprintCallable)
-	void Arm();
+	void AttachWeaponToHand();
 	UFUNCTION(BlueprintCallable)
 	void ResetEquipState();
 
 	virtual bool CanAttack() const override;
-private:
 
+private:
 
 	bool CanDisarm() const;
 	bool CanArm() const;
@@ -95,9 +98,7 @@ private:
 	TObjectPtr<AItem> OverlappingItem;
 
 	void DropWeapon();
-
-
-
+	
 
 	/*
 	* ANIMATION MONTAGES
@@ -105,8 +106,7 @@ private:
 
 	UPROPERTY()
 	TObjectPtr <UAnimMontage> EquipMontage;
-
-
+	
 public:
 	FORCEINLINE void SetOverlappingItem(AItem* Item) { OverlappingItem = Item; }
 	FORCEINLINE TObjectPtr<AItem> GetOverlappingItem() const { return OverlappingItem; }

@@ -60,6 +60,34 @@ void ASlashCharacter::BeginPlay()
 	}
 }
 
+void ASlashCharacter::EquipWeapon(AWeapon* Weapon)
+{
+	Weapon->Equip(GetMesh(), FName("RightHandSocket"), this, this);
+	OverlappingItem = nullptr;
+	if(EquippedWeapon)
+	{
+		DropWeapon();
+	}
+
+	switch(Weapon->GetWeaponType())
+	{
+	case EWeaponType::EWT_OneHanded:
+		CharacterState = ECharacterState::ECS_EquippedOneHandedWeapon;
+		break;
+	case EWeaponType::EWT_TwoHanded:
+		CharacterState = ECharacterState::ECS_EquippedTwoHandedWeapon;
+		break;
+	default:
+		CharacterState = ECharacterState::ECS_EquippedOneHandedWeapon;
+		break;
+	}
+			
+	EquippedWeapon = Weapon;
+			
+	SetAttackMontage(EquippedWeapon->GetAttackMontage());
+	EquipMontage = EquippedWeapon->GetEquipMontage();
+}
+
 
 // Called every frame
 void ASlashCharacter::Tick(float DeltaTime)
@@ -77,7 +105,7 @@ void ASlashCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 		EnhancedInputComponent->BindAction(MovementAction, ETriggerEvent::Triggered, this, &ASlashCharacter::Move);
 		EnhancedInputComponent->BindAction(LookingAction, ETriggerEvent::Triggered, this, &ASlashCharacter::Look);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ASlashCharacter::Jumping);
-		EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Started, this, &ASlashCharacter::Equip);
+		EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Started, this, &ASlashCharacter::EKeyPressed);
 		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Started, this, &ASlashCharacter::Attack);
 	}
 
@@ -121,51 +149,41 @@ void ASlashCharacter::Jumping(const FInputActionValue& Value)
 
 }
 
-void ASlashCharacter::Equip(const FInputActionValue& Value)
+void ASlashCharacter::SheathWeapon()
+{
+	PlayEquipMontage(FName("Unequip"));
+	CharacterState = ECharacterState::ECS_Unequipped;
+	ActionState = EActionState::EAS_EquippingWeapon;
+}
+
+void ASlashCharacter::UnsheathWeapon()
+{
+	PlayEquipMontage(FName("Equip"));
+	CharacterState = ECharacterState::ECS_EquippedOneHandedWeapon;
+	ActionState = EActionState::EAS_EquippingWeapon;
+}
+
+void ASlashCharacter::ToggleArmWeapon()
+{
+	if (CanDisarm()) {
+		SheathWeapon();
+	}else if (CanArm()) {
+		UnsheathWeapon();
+	}
+}
+
+void ASlashCharacter::EKeyPressed(const FInputActionValue& Value)
 {
 	if (ActionState == EActionState::EAS_Attacking)return;
 
 	if (OverlappingItem) {
 		if (TObjectPtr<AWeapon> asWeapon = Cast<AWeapon>(OverlappingItem)) {
-			asWeapon->Equip(GetMesh(), FName("RightHandSocket"), this, this);
-			OverlappingItem = nullptr;
-			if(EquippedWeapon)
-			{
-				DropWeapon();
-			}
-
-			switch(asWeapon->GetWeaponType())
-			{
-			case EWeaponType::EWT_OneHanded:
-				CharacterState = ECharacterState::ECS_EquippedOneHandedWeapon;
-				break;
-			case EWeaponType::EWT_TwoHanded:
-				CharacterState = ECharacterState::ECS_EquippedTwoHandedWeapon;
-				break;
-			default:
-				CharacterState = ECharacterState::ECS_EquippedOneHandedWeapon;
-				break;
-			}
-			
-			EquippedWeapon = asWeapon;
-			
-			AttackMontage = EquippedWeapon->GetAttackMontage();
-			EquipMontage = EquippedWeapon->GetEquipMontage();
+			EquipWeapon(asWeapon);
 
 		}
 	}
 	else {
-		if (CanDisarm()) {
-
-			PlayEquipMontage(FName("Unequip"));
-			CharacterState = ECharacterState::ECS_Unequipped;
-			ActionState = EActionState::EAS_EquippingWeapon;
-		}else
-		if (CanArm()) {
-			PlayEquipMontage(FName("Equip"));
-			CharacterState = ECharacterState::ECS_EquippedOneHandedWeapon;
-			ActionState = EActionState::EAS_EquippingWeapon;
-		}
+		ToggleArmWeapon();
 	}
 
 }
@@ -179,7 +197,7 @@ void ASlashCharacter::PlayEquipMontage(const FName& Section) const
 
 }
 
-void ASlashCharacter::Disarm() const
+void ASlashCharacter::AttachWeaponToBack() const
 {
 	if (EquippedWeapon) {
 		EquippedWeapon->AttachMeshToSocket(GetMesh(), FName("SpineSocket"));
@@ -187,7 +205,7 @@ void ASlashCharacter::Disarm() const
 
 }
 
-void ASlashCharacter::Arm()
+void ASlashCharacter::AttachWeaponToHand()
 {
 	if (EquippedWeapon) {
 		EquippedWeapon->AttachMeshToSocket(GetMesh(), FName("RightHandSocket"));

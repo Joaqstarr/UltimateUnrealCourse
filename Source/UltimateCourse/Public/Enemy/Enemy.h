@@ -19,57 +19,65 @@ class ULTIMATECOURSE_API AEnemy : public ABaseCharacter
 
 public:
 	AEnemy();
-	virtual void Tick(float DeltaTime) override;
 
-	virtual void GetHit_Implementation(const FVector& ImpactPoint) override;
-
+	/** <AActor> */
+	virtual void Tick(float DeltaTime) override; 
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 	virtual void Destroyed() override;
-	virtual void HandleDamage(float DamageAmount) override;
+
+	/** </AActor> */
+
+	/** <IHitInterface> */
+	virtual void GetHit_Implementation(const FVector& ImpactPoint) override;
 
 protected:
 	// Called when the game starts or when spawned
+	/** <AActor> */
 	virtual void BeginPlay() override;
+	/** </AActor> */
+	/** <ABaseCharacter> */
 	virtual void Die() override;
+	virtual void Attack() override;
+	virtual  bool CanAttack() const override;
+	virtual void ResetAttackState() override;
+	virtual void HandleDamage(float DamageAmount) override;
+	virtual int32 PlayDeathMontage() override;
+
+	/** </ABaseCharacter> */
+
+	
 	UPROPERTY(BlueprintReadOnly)
 	EDeathPose DeathPose;
-
-	virtual int32 PlayDeathMontage() override;
+	
 	UPROPERTY(BlueprintReadOnly)
 	EEnemyState EnemyState = EEnemyState::EES_Patrolling;
 
 	
-	virtual void Attack() override;
-	bool IsDead() const;
-	bool IsEngaged() const;
-	virtual  bool CanAttack() const override;
-	virtual void ResetAttackState() override;
-private:
 
+
+	
+private:
+	
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UHealthBarComponent> HealthBarComponent;
+	void SetHealthBarVisibility(bool Visibility) const;
+	
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<AWeapon> WeaponClass;
+	
+	/** AI Behavior */
 
 
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<UPawnSensingComponent> PawnSensingComponent;
+
+	UPROPERTY()
 	TObjectPtr<APawn> CombatTarget;
+
 	UPROPERTY(EditDefaultsOnly, Category=Combat)
 	float CombatRadius = 1000;
 	UPROPERTY(EditDefaultsOnly, Category=Combat)
 	float AttackRadius = 150;
-	void CheckCombatTarget();
-	UPROPERTY(EditAnywhere, Category=Combat)
-	float DeathLifeSpan = 8.f;
-
-	bool InTargetRange(const AActor* Target, const float Radius) const;
-
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<AWeapon> WeaponClass;
-
-	void SetHealthBarVisibility(bool Visibility) const;
-
-	/*
-	 *Navigation
-	 */
-
 
 	UPROPERTY(EditInstanceOnly, Category="AI Navigation")
 	TObjectPtr<AActor> CurrentPatrolTarget;
@@ -78,14 +86,23 @@ private:
 	TObjectPtr<AAIController> AiController;
 	UPROPERTY(EditDefaultsOnly, Category="AI Navigation")
 	float AcceptableNavPointDistance = 15.f;
-
+	
+	/*
+	 *Navigation
+	*/
+		
 	int PointPosition = 0;
-	void UpdatePatrolPoints();
-	void MoveToTarget(TObjectPtr<AActor> Target) const;
-
 	UPROPERTY(EditAnywhere, Category="AI Navigation")
 	float PatrolWaitTime = 3.f;
 	FTimerHandle PatrolTimer;
+
+	
+	void InitializeEnemy();
+	
+	void UpdatePatrolPoints();
+	void CheckCombatTarget();
+	
+
 	void PatrolTimerFinished() const;
 	void LoseInterest();
 	void StartPatrolling();
@@ -93,18 +110,18 @@ private:
 	bool IsOutsideAttackRadius() const;
 	bool IsChasing() const;
 	bool IsAttacking() const;
-	
-	/*
-	 * Ai Aggro
-	 */
-	UPROPERTY(VisibleAnywhere)
-	TObjectPtr<UPawnSensingComponent> PawnSensingComponent;
-	UFUNCTION()
-	void OnPawnSpotted( APawn* Pawn);
+	bool InTargetRange(const AActor* Target, const float Radius) const;
+	bool IsDead() const;
+	bool IsEngaged() const;
+	void SpawnDefaultWeapon();
+
+	void MoveToTarget(TObjectPtr<AActor> Target) const;
 	/*
 	 *Combat
 	 */
 
+	UFUNCTION()
+	void OnPawnSpotted( APawn* Pawn); //callback for pawn sensor
 	void StartAttackTimer();
 	void ClearAttackTimer();
 
@@ -118,6 +135,9 @@ private:
 	float AttackMin = 0.5f;
 	UPROPERTY(EditAnywhere, Category="Combat")
 	float AttackMax = 1.f;
-	
+	UPROPERTY(EditAnywhere, Category=Combat)
+	float DeathLifeSpan = 8.f;
+
+
 
 };
