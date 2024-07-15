@@ -82,7 +82,8 @@ void AEnemy::GetHit_Implementation(const FVector& ImpactPoint)
 void AEnemy::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	Tags.Add(FName("Enemy"));
+
 	if(PawnSensingComponent)	
 		PawnSensingComponent->OnSeePawn.AddDynamic(this, &AEnemy::OnPawnSpotted);
 
@@ -315,7 +316,7 @@ void AEnemy::PatrolTimerFinished() const
 void AEnemy::OnPawnSpotted(APawn* Pawn)
 {
 	const bool bShouldChaseTarger = EnemyState < EEnemyState::EES_Chasing &&
-		!IsDead() && Pawn->ActorHasTag(FName("SlashCharacter"));
+		!IsDead() && Pawn->ActorHasTag(FName("EngageableTarget"));
 	
 	if(!bShouldChaseTarger) return;
 	

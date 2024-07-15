@@ -29,7 +29,7 @@ AItem::AItem()
 	NiagaraComponent = CreateDefaultSubobject<UNiagaraComponent>(FName("FloatingParticle"));
 	NiagaraComponent->SetupAttachment(GetRootComponent());
 	ItemMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
-	ItemMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	ItemMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision); 
 
 }
 

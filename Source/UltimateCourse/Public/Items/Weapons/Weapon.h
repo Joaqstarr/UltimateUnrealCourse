@@ -28,10 +28,12 @@ public:
 	TObjectPtr<UAnimMontage> GetAttackMontage() const;
 	TObjectPtr<UAnimMontage> GetEquipMontage() const;
 	EWeaponType GetWeaponType() const;
+
 protected:
 	virtual void BeginPlay() override;
-	virtual void OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) override;
-	virtual void OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex) override;
+	void PlayEquipSound();
+	void DisableSphereCollision();
+	void DeactivateEmbers();
 	UFUNCTION(BlueprintCallable)
 	void OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
@@ -64,4 +66,12 @@ private:
 	EWeaponType WeaponClass;
 
 	FRotator DefaultRotation;
+
+	void BoxTrace(FHitResult& HitResult);
+	void ExecuteGetHit(FHitResult HitResult);
+	bool ActorIsSameType(AActor* OtherActor);
+	UPROPERTY(EditAnywhere, Category="Weapon Properties")
+	FVector BoxTraceExtent = FVector(0.5f);
+	UPROPERTY(EditAnywhere, Category="Weapon Properties")
+	bool bShowBoxDebug = false;
 };

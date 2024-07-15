@@ -36,20 +36,22 @@ void AWeapon::BeginPlay()
 	DefaultRotation = GetActorRotation();
 }
 
-void AWeapon::Equip(TObjectPtr<USceneComponent> parent, FName socketName, TObjectPtr<AActor> newOwner, TObjectPtr<APawn> newInstigator)
+void AWeapon::PlayEquipSound()
 {
-	AttachMeshToSocket(parent, socketName);
-	ItemState = EItemState::EIS_Equipped;
-
-	SetOwner(newOwner);
-	SetInstigator(newInstigator);
-	
 	if (EquipSound) {
 		UGameplayStatics::PlaySoundAtLocation(this, EquipSound, GetActorLocation());
 	}
+}
+
+void AWeapon::DisableSphereCollision()
+{
 	if (Sphere) {
 		Sphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
+}
+
+void AWeapon::DeactivateEmbers()
+{
 	if(NiagaraComponent)
 	{
 		if(NiagaraComponent->IsActive())
@@ -59,12 +61,25 @@ void AWeapon::Equip(TObjectPtr<USceneComponent> parent, FName socketName, TObjec
 	}
 }
 
+void AWeapon::Equip(TObjectPtr<USceneComponent> parent, FName socketName, TObjectPtr<AActor> newOwner, TObjectPtr<APawn> newInstigator)
+{
+	AttachMeshToSocket(parent, socketName);
+	ItemState = EItemState::EIS_Equipped;
+	SetOwner(newOwner);
+	SetInstigator(newInstigator);
+	DisableSphereCollision();
+
+	PlayEquipSound();
+	DeactivateEmbers();
+}
+
 void AWeapon::DropWeapon(const FVector& Location)
 {
 	ItemState = EItemState::EIS_Hovering;
 	SetOwner(nullptr);
 	SetInstigator(nullptr);
 	ItemMesh->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+	IgnoreActors.Empty();
 	//SetActorLocation(Location);
 	if (Sphere) {
 		Sphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
@@ -111,38 +126,50 @@ EWeaponType AWeapon::GetWeaponType() const
 	return WeaponClass;
 }
 
-void AWeapon::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void AWeapon::BoxTrace(FHitResult& HitResult)
 {
-	Super::OnSphereOverlap(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 
+	EDrawDebugTrace::Type Trace = (bShowBoxDebug)? EDrawDebugTrace::ForDuration : EDrawDebugTrace::None;
+	
+	UKismetSystemLibrary::BoxTraceSingle(this, TraceStart->GetComponentLocation(), TraceEnd->GetComponentLocation(),
+	                                     BoxTraceExtent, FRotator(0, 0, 0),TraceTypeQuery1,
+	                                     false, IgnoreActors, Trace, HitResult, true);
 }
 
-void AWeapon::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+void AWeapon::ExecuteGetHit(FHitResult HitResult)
 {
-	Super::OnSphereEndOverlap(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex);
+	if(IIHitInterface* Hittable = Cast<IIHitInterface>(HitResult.GetActor()); Hittable != nullptr)
+	{
+		Hittable->Execute_GetHit(HitResult.GetActor(), HitResult.ImpactPoint);
+	}
+}
+
+bool AWeapon::ActorIsSameType(AActor* OtherActor)
+{
+	return GetOwner()->ActorHasTag(TEXT("Enemy")) && OtherActor->ActorHasTag(TEXT("Enemy"));
 }
 
 void AWeapon::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
-	int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+                           int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+	if(ActorIsSameType(OtherActor))return;
+	
 	FHitResult HitResult;
 
 	IgnoreActors.AddUnique(this);
+	IgnoreActors.AddUnique(this->GetOwner());
+	BoxTrace(HitResult);
+
+	IgnoreActors.AddUnique(HitResult.GetActor());
+
 	
-	UKismetSystemLibrary::BoxTraceSingle(this, TraceStart->GetComponentLocation(), TraceEnd->GetComponentLocation(),
-		FVector(2.5f, 2.5f, 2.5f), FRotator(0, 0, 0),TraceTypeQuery1,
-		false, IgnoreActors, EDrawDebugTrace::None, HitResult, true);
-	//DRAW_SPHERE(HitResult.ImpactPoint);
-	if(HitResult.GetActor())
-	{
-		if(IIHitInterface* Hittable = Cast<IIHitInterface>(HitResult.GetActor()); Hittable != nullptr)
-		{
-			UGameplayStatics::ApplyDamage(HitResult.GetActor(), Damage, GetInstigator()->GetController(), this, UDamageType::StaticClass());
-			Hittable->Execute_GetHit(HitResult.GetActor(), HitResult.ImpactPoint);
-		}
-		IgnoreActors.AddUnique(HitResult.GetActor());
-		CreateFields(HitResult.ImpactPoint);
-	}
+	if(!HitResult.GetActor())return;
+	if(ActorIsSameType(HitResult.GetActor()))return;
+
+	UGameplayStatics::ApplyDamage(HitResult.GetActor(), Damage, GetInstigator()->GetController(), this, UDamageType::StaticClass());
+	ExecuteGetHit(HitResult);
+	
+	CreateFields(HitResult.ImpactPoint);
 }
 
 void AWeapon::EnableAttackCollision() const

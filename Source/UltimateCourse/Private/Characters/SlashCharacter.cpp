@@ -10,6 +10,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GroomComponent.h"
 #include "Items/Weapons/Weapon.h"
+#include "Components/StaticMeshComponent.h"
 #include "Animation/AnimInstance.h"
 
 // Sets default values
@@ -40,6 +41,12 @@ ASlashCharacter::ASlashCharacter()
 
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 
+	GetMesh()->SetCollisionObjectType(ECC_WorldDynamic);
+	GetMesh()->SetCollisionResponseToAllChannels(ECR_Ignore);
+	GetMesh()->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Overlap);
+	GetMesh()->SetGenerateOverlapEvents(true);
+	GetMesh()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+
 }
 
 // Called when the game starts or when spawned
@@ -47,7 +54,7 @@ void ASlashCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	Tags.Add(FName("SlashCharacter"));
+	Tags.Add(FName("EngageableTarget"));
 	
 	if (TObjectPtr <APlayerController> PlayerController = Cast<APlayerController>(GetController())) {
 		if (TObjectPtr<UEnhancedInputLocalPlayerSubsystem> InputSubsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer())) {
@@ -238,6 +245,9 @@ void ASlashCharacter::ResetAttackState()
 void ASlashCharacter::GetHit_Implementation(const FVector& ImpactPoint)
 {
 	Super::GetHit_Implementation(ImpactPoint);
+
+	PlayHitSound(GetActorLocation());
+	PlayHitParticle(GetActorLocation());
 }
 
 bool ASlashCharacter::CanAttack() const
