@@ -76,6 +76,7 @@ void ABaseCharacter::ResetAttackState()
 
 bool ABaseCharacter::IsAlive() const
 {
+	if(!Attributes)return true;
 	return Attributes->IsAlive();
 }
 

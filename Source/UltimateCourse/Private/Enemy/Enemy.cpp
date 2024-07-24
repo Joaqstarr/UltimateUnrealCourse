@@ -67,7 +67,7 @@ void AEnemy::Destroyed()
 
 void AEnemy::GetHit_Implementation(const FVector& ImpactPoint)
 {
-	if(Attributes && IsAlive())
+	if(IsAlive())
 	{
 		SetHealthBarVisibility(true);
 		PlayHitReactMontage(GetDirectionFromHitPoint(ImpactPoint));
