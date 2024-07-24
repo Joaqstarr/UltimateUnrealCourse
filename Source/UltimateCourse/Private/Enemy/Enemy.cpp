@@ -65,12 +65,12 @@ void AEnemy::Destroyed()
 	}
 }
 
-void AEnemy::GetHit_Implementation(const FVector& ImpactPoint)
+void AEnemy::GetHit_Implementation(const FVector& ImpactPoint, const AActor* Hitter)
 {
 	if(IsAlive())
 	{
 		SetHealthBarVisibility(true);
-		PlayHitReactMontage(GetDirectionFromHitPoint(ImpactPoint));
+		PlayHitReactMontage(GetDirectionFromHitPoint(Hitter->GetActorLocation()));
 	}
 	else Die();
 

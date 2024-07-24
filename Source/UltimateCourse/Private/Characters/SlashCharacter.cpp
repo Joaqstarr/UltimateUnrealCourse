@@ -243,18 +243,17 @@ void ASlashCharacter::ResetAttackState()
 	ActionState = EActionState::EAS_Unoccupied;
 }
 
-void ASlashCharacter::GetHit_Implementation(const FVector& ImpactPoint)
+void ASlashCharacter::GetHit_Implementation(const FVector& ImpactPoint, const AActor* Hitter)
 {
-	Super::GetHit_Implementation(ImpactPoint);
 
 	PlayHitSound(GetActorLocation());
 	PlayHitParticle(GetActorLocation());
-
+	UpdateWeaponCollision(false);
 	ActionState = EActionState::EAS_HitReaction;
 	
 	if(IsAlive())
 	{
-		PlayHitReactMontage(GetDirectionFromHitPoint(ImpactPoint));
+		PlayHitReactMontage(GetDirectionFromHitPoint(Hitter->GetActorLocation()));
 	}
 }
 

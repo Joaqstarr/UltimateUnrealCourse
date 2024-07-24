@@ -140,7 +140,7 @@ void AWeapon::ExecuteGetHit(FHitResult HitResult)
 {
 	if(IIHitInterface* Hittable = Cast<IIHitInterface>(HitResult.GetActor()); Hittable != nullptr)
 	{
-		Hittable->Execute_GetHit(HitResult.GetActor(), HitResult.ImpactPoint);
+		Hittable->Execute_GetHit(HitResult.GetActor(), HitResult.ImpactPoint, GetOwner());
 	}
 }
 

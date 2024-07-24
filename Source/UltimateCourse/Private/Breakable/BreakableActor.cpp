@@ -56,7 +56,7 @@ TSubclassOf<AItem> ABreakableActor::GetRandomDrop()
 	return ItemDrops[Ran];
 }
 
-void ABreakableActor::GetHit_Implementation(const FVector& ImpactPoint)
+void ABreakableActor::GetHit_Implementation(const FVector& ImpactPoint, const AActor* Hitter)
 {
 	
 }
