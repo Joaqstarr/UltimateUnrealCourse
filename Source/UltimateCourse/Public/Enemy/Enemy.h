@@ -104,6 +104,7 @@ private:
 	
 
 	void PatrolTimerFinished() const;
+	void ClearPatrolTimer();
 	void LoseInterest();
 	void StartPatrolling();
 	void ChaseTarget();

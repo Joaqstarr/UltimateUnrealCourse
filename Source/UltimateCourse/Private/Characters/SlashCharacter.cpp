@@ -249,6 +249,9 @@ void ASlashCharacter::GetHit_Implementation(const FVector& ImpactPoint)
 
 	PlayHitSound(GetActorLocation());
 	PlayHitParticle(GetActorLocation());
+
+	ActionState = EActionState::EAS_HitReaction;
+	
 	if(IsAlive())
 	{
 		PlayHitReactMontage(GetDirectionFromHitPoint(ImpactPoint));
@@ -257,7 +260,7 @@ void ASlashCharacter::GetHit_Implementation(const FVector& ImpactPoint)
 
 bool ASlashCharacter::CanAttack() const
 {
-	return CharacterState != ECharacterState::ECS_Unequipped && ActionState == EActionState::EAS_Unoccupied;
+	return CharacterState != ECharacterState::ECS_Unequipped && ActionState == EActionState::EAS_Unoccupied && ActionState != EActionState::EAS_HitReaction;
 }
 
 bool ASlashCharacter::CanDisarm() const
@@ -274,4 +277,9 @@ void ASlashCharacter::DropWeapon()
 {
 	EquippedWeapon->DropWeapon(GetActorLocation());
 	EquippedWeapon = nullptr;
+}
+
+void ASlashCharacter::ResetHitReactState()
+{
+	ActionState = EActionState::EAS_Unoccupied;
 }

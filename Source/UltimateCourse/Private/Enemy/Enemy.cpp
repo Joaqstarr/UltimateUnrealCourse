@@ -74,7 +74,7 @@ void AEnemy::GetHit_Implementation(const FVector& ImpactPoint)
 	}
 	else Die();
 
-
+	ClearPatrolTimer();
 	PlayHitSound(ImpactPoint);
 	PlayHitParticle(ImpactPoint);
 }
@@ -99,8 +99,8 @@ void AEnemy::Die()
 	SetLifeSpan(DeathLifeSpan);
 	ClearAttackTimer();
 	PlayDeathMontage();
-
-
+	
+	UpdateWeaponCollision(false);
 	PrimaryActorTick.bCanEverTick = false;
 	EnemyState = EEnemyState::EES_Dead;
 
@@ -313,6 +313,11 @@ void AEnemy::PatrolTimerFinished() const
 	MoveToTarget(CurrentPatrolTarget);
 }
 
+void AEnemy::ClearPatrolTimer()
+{
+	GetWorldTimerManager().ClearTimer(PatrolTimer);
+}
+
 void AEnemy::OnPawnSpotted(APawn* Pawn)
 {
 
@@ -321,7 +326,7 @@ void AEnemy::OnPawnSpotted(APawn* Pawn)
 	
 	if(!bShouldChaseTarger) return;
 	
-	GetWorldTimerManager().ClearTimer(PatrolTimer);
+	ClearPatrolTimer();
 	CombatTarget = Pawn;
 	ChaseTarget();
 }

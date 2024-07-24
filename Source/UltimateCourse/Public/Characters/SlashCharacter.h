@@ -80,6 +80,7 @@ private:
 	bool CanArm() const;
 
 	ECharacterState CharacterState = ECharacterState::ECS_Unequipped;
+	UPROPERTY(VisibleInstanceOnly)
 	EActionState ActionState = EActionState::EAS_Unoccupied;
 
 	UPROPERTY(VisibleAnywhere)
@@ -106,6 +107,9 @@ private:
 
 	UPROPERTY()
 	TObjectPtr <UAnimMontage> EquipMontage;
+
+	UFUNCTION(BlueprintCallable)
+	void ResetHitReactState();
 	
 public:
 	FORCEINLINE void SetOverlappingItem(AItem* Item) { OverlappingItem = Item; }
