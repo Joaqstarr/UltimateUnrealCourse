@@ -37,11 +37,10 @@ void ABaseCharacter::DisableCapsule()
 
 void ABaseCharacter::PlayHitReactMontage(const FName& Section) const
 {
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if(!AnimInstance || !ReactMontage)return;
+	if(!ReactMontage)return;
 
-	AnimInstance->Montage_Play(ReactMontage);
-	AnimInstance->Montage_JumpToSection(Section);
+	PlayMontageSection(ReactMontage, Section);
+
 }
 
 bool ABaseCharacter::CanAttack() const
@@ -57,10 +56,10 @@ void ABaseCharacter::Tick(float DeltaTime)
 
 void ABaseCharacter::UpdateWeaponCollision(bool collisionTo)
 {
-	if(EquippedWeapon)
-	{
-		EquippedWeapon->UpdateWeaponCollision(collisionTo);
-	}
+	if(!EquippedWeapon)return;
+	
+	EquippedWeapon->UpdateWeaponCollision(collisionTo);
+	
 }
 
 void ABaseCharacter::Attack()
@@ -94,6 +93,7 @@ FName ABaseCharacter::GetDirectionFromHitPoint(const FVector& HitPoint) const
 	const FVector ImpactLowered(HitPoint.X, HitPoint.Y, GetActorLocation().Z);
 	const FVector ToHit = (ImpactLowered - GetActorLocation()).GetSafeNormal();
 	
+	
 	float Angle = UKismetMathLibrary::Acos(FVector::DotProduct(Forward, ToHit));
 	Angle = UKismetMathLibrary::RadiansToDegrees(Angle);
 	const float AngleAbs = UKismetMathLibrary::Abs(Angle);
@@ -121,6 +121,8 @@ FName ABaseCharacter::GetDirectionFromHitPoint(const FVector& HitPoint) const
 	return FName("Back");
 }
 
+
+
 void ABaseCharacter::SetAttackMontage(TObjectPtr<UAnimMontage> newMontage)
 {
 	AttackMontage = newMontage;
@@ -128,18 +130,18 @@ void ABaseCharacter::SetAttackMontage(TObjectPtr<UAnimMontage> newMontage)
 
 void ABaseCharacter::PlayHitSound(const FVector& Location) const
 {
-	if(HitSound)
-	{
-		UGameplayStatics::PlaySoundAtLocation(this, HitSound, Location);
-	}
+	if(!HitSound)return;
+	
+	UGameplayStatics::PlaySoundAtLocation(this, HitSound, Location);
+	
 }
 
 void ABaseCharacter::PlayHitParticle(const FVector& Location) const
 {
-	if(HitEffect)
-	{
-		UGameplayStatics::SpawnEmitterAtLocation(this, HitEffect, Location, FRotator::ZeroRotator, FVector(1), true, EPSCPoolMethod::None, true);
-	}
+	if(!HitEffect)return;
+	
+	UGameplayStatics::SpawnEmitterAtLocation(this, HitEffect, Location, FRotator::ZeroRotator, FVector(1), true, EPSCPoolMethod::None, true);
+	
 }
 
 void ABaseCharacter::PlayMontageSection(TObjectPtr<UAnimMontage> Montage, const FName& SectionName) const
@@ -154,6 +156,7 @@ void ABaseCharacter::PlayMontageSection(TObjectPtr<UAnimMontage> Montage, const 
 int32 ABaseCharacter::PlayRandomMontageSection(TObjectPtr<UAnimMontage> Montage, const TArray<FName>& SectionNames) const
 {
 	if(SectionNames.Num() <= 0) return -1;
+	
 	
 	const uint32 MaxSectionIndex = SectionNames.Num()-1;
 	const uint32 Selection = FMath::RandRange(0, MaxSectionIndex);

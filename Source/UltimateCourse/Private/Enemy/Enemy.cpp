@@ -315,6 +315,7 @@ void AEnemy::PatrolTimerFinished() const
 
 void AEnemy::OnPawnSpotted(APawn* Pawn)
 {
+
 	const bool bShouldChaseTarger = EnemyState < EEnemyState::EES_Chasing &&
 		!IsDead() && Pawn->ActorHasTag(FName("EngageableTarget"));
 	

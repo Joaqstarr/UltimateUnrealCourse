@@ -123,6 +123,7 @@ void ASlashCharacter::Move(const FInputActionValue& Value)
 	if (ActionState != EActionState::EAS_Unoccupied)return;
 
 	if (!GetController())return;
+	
 	const FVector CurVal = Value.Get<FVector>();
 	  
 	const FRotator YawRotation(0.f, GetControlRotation().Yaw, 0.f);
@@ -153,7 +154,7 @@ void ASlashCharacter::Jumping(const FInputActionValue& Value)
 	if (!GetController())return;
 	Jump();
 	
-
+	
 }
 
 void ASlashCharacter::SheathWeapon()
@@ -248,6 +249,10 @@ void ASlashCharacter::GetHit_Implementation(const FVector& ImpactPoint)
 
 	PlayHitSound(GetActorLocation());
 	PlayHitParticle(GetActorLocation());
+	if(IsAlive())
+	{
+		PlayHitReactMontage(GetDirectionFromHitPoint(ImpactPoint));
+	}
 }
 
 bool ASlashCharacter::CanAttack() const
