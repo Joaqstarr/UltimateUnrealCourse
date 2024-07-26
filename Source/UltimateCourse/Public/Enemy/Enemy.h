@@ -52,10 +52,9 @@ protected:
 	UPROPERTY(BlueprintReadOnly)
 	EEnemyState EnemyState = EEnemyState::EES_Patrolling;
 
-	
+	UPROPERTY(BlueprintReadOnly, Category=Combat)
+    TObjectPtr<APawn> CombatTarget;
 
-
-	
 private:
 	
 	UPROPERTY(VisibleAnywhere)
@@ -70,9 +69,6 @@ private:
 
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UPawnSensingComponent> PawnSensingComponent;
-
-	UPROPERTY()
-	TObjectPtr<APawn> CombatTarget;
 
 	UPROPERTY(EditDefaultsOnly, Category=Combat)
 	float CombatRadius = 1000;

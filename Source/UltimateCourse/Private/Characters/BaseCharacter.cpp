@@ -145,6 +145,14 @@ void ABaseCharacter::PlayHitParticle(const FVector& Location) const
 	
 }
 
+void ABaseCharacter::StopAttackMontage() const
+{
+	if(UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
+	{
+		AnimInstance->Montage_Stop(0.25f, AttackMontage);
+	}
+}
+
 void ABaseCharacter::PlayMontageSection(TObjectPtr<UAnimMontage> Montage, const FName& SectionName) const
 {
 	if (const TObjectPtr<UAnimInstance> AnimInstance = GetMesh()->GetAnimInstance(); AnimInstance && Montage)

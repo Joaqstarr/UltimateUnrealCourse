@@ -53,7 +53,8 @@ protected:
 
 	int32 PlayAttackMontage();
 	virtual int32 PlayDeathMontage();
-	
+	void StopAttackMontage() const;
+
 
 	
 
