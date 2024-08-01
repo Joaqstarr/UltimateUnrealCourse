@@ -103,6 +103,13 @@ void ASlashCharacter::Tick(float DeltaTime)
 
 }
 
+float ASlashCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator,
+	AActor* DamageCauser)
+{
+	HandleDamage(DamageAmount);
+	return DamageAmount;
+}
+
 // Called to bind functionality to input
 void ASlashCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {

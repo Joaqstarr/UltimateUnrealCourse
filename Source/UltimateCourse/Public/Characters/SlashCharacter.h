@@ -25,6 +25,7 @@ public:
 	// Sets default values for this character's properties
 	ASlashCharacter();
 	virtual void Tick(float DeltaTime) override;
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	virtual void ResetAttackState() override;
