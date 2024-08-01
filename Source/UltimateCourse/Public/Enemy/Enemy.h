@@ -52,8 +52,6 @@ protected:
 	UPROPERTY(BlueprintReadOnly)
 	EEnemyState EnemyState = EEnemyState::EES_Patrolling;
 
-	UPROPERTY(BlueprintReadOnly, Category=Combat)
-    TObjectPtr<APawn> CombatTarget;
 
 private:
 	

@@ -5,6 +5,7 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/AttributeComponent.h"
+#include "UltimateCourse/DebugMacros.h"
 
 ABaseCharacter::ABaseCharacter()
 {
@@ -151,6 +152,34 @@ void ABaseCharacter::StopAttackMontage() const
 	{
 		AnimInstance->Montage_Stop(0.25f, AttackMontage);
 	}
+}
+
+FVector ABaseCharacter::GetTranslationWarpTarget() const
+{
+	if(CombatTarget == nullptr)	return FVector();
+
+	const FVector CombatTargetLocation = CombatTarget->GetActorLocation();
+	const FVector Location = GetActorLocation();
+
+	FVector TargetToMe = (Location - CombatTargetLocation).GetSafeNormal();
+	TargetToMe *= WarpTargetDistance;
+
+	const FVector WarpLocation = CombatTargetLocation + TargetToMe;
+	//DRAW_SPHERE_WITH_DETAILS(CombatTargetLocation, FColor::Green, WarpTargetDistance, 1.f);
+	DRAW_SPHERE_SingleFrame(WarpLocation)
+	if((Location-CombatTargetLocation).Length() < WarpTargetDistance)
+		return Location;
+	
+	return WarpLocation;
+}
+
+FVector ABaseCharacter::GetRotationWarpTarget() const
+{
+	if(CombatTarget)
+	{
+		return CombatTarget->GetActorLocation();
+	}
+	return FVector();
 }
 
 void ABaseCharacter::PlayMontageSection(TObjectPtr<UAnimMontage> Montage, const FName& SectionName) const

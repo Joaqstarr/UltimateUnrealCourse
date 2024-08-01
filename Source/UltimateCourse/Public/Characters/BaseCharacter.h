@@ -47,6 +47,7 @@ protected:
 	void DisableCapsule();
 	UFUNCTION(BlueprintCallable)
     virtual void ResetAttackState();
+	UFUNCTION(BlueprintCallable)
     bool IsAlive() const;
     virtual void HandleDamage( float DamageAmount);
 	
@@ -55,9 +56,17 @@ protected:
 	virtual int32 PlayDeathMontage();
 	void StopAttackMontage() const;
 
-
+	UFUNCTION(BlueprintCallable)
+	FVector GetTranslationWarpTarget() const;
 	
+	UFUNCTION(BlueprintCallable)
+	FVector GetRotationWarpTarget() const;
 
+	UPROPERTY(BlueprintReadOnly, Category=Combat)
+	TObjectPtr<APawn> CombatTarget;
+
+	UPROPERTY(EditAnywhere, Category=Combat)
+	double WarpTargetDistance = 75.f;
 private:
 	/*
 	 *Effects

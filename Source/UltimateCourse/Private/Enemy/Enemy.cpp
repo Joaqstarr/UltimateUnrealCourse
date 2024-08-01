@@ -186,7 +186,7 @@ void AEnemy::UpdatePatrolPoints()
 
 void AEnemy::CheckCombatTarget()
 {
-	if(EnemyState <= EEnemyState::EES_Patrolling )return;
+	if(EnemyState <= EEnemyState::EES_Patrolling  && EnemyState != EEnemyState::EES_NoState)return;
 	if(!CombatTarget)
 	{
 		ClearAttackTimer();
